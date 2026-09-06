@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CoachApp.Training</RootNamespace>
+    <AssemblyName>CoachApp.Training.Application</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CoachApp.Training.Domain\CoachApp.Training.Domain.csproj" />
+    <ProjectReference Include="..\CoachApp.Training.Application.Contracts\CoachApp.Training.Application.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.Ddd.Application" Version="10.4.0" />
+    <PackageReference Include="Volo.Abp.Mapperly" Version="10.4.0" />
+  </ItemGroup>
+
+</Project>

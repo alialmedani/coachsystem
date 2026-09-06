@@ -1,0 +1,33 @@
+{
+  "Culture": "ar",
+  "Texts": {
+    "Menu:Training": "التدريب",
+    "Menu:Trainees": "المتدربون",
+    "Trainees": "المتدربون",
+    "Trainee": "متدرب",
+    "NewTrainee": "متدرب جديد",
+    "EditTrainee": "تعديل المتدرب",
+
+    "DisplayName:Code": "الرمز",
+    "DisplayName:FirstName": "الاسم الأول",
+    "DisplayName:LastName": "الاسم الأخير",
+    "DisplayName:Gender": "الجنس",
+    "DisplayName:BirthDate": "تاريخ الميلاد",
+    "DisplayName:Email": "البريد الإلكتروني",
+    "DisplayName:PhoneNumber": "رقم الهاتف",
+    "DisplayName:Address": "العنوان",
+    "DisplayName:IsActive": "نشط",
+
+    "Enum:Gender.0": "غير محدد",
+    "Enum:Gender.1": "ذكر",
+    "Enum:Gender.2": "أنثى",
+
+    "Permission:Training": "إدارة التدريب",
+    "Permission:Trainees": "المتدربون",
+    "Permission:Trainees.Create": "إضافة متدرب",
+    "Permission:Trainees.Update": "تعديل متدرب",
+    "Permission:Trainees.Delete": "حذف متدرب",
+
+    "Training:00001": "يوجد متدرب بنفس الرمز '{Code}' مسبقاً."
+  }
+}

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CoachApp.Training</RootNamespace>
+    <AssemblyName>CoachApp.Training.EntityFrameworkCore</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CoachApp.Training.Domain\CoachApp.Training.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- NO-MIGRATIONS: the module ships the model configuration only. It does NOT
+         reference Microsoft.EntityFrameworkCore.Tools/Design and has no Migrations
+         folder. The host CoachAppDbContext remains the single migration/design-time
+         context; database schema is managed manually. -->
+    <PackageReference Include="Volo.Abp.EntityFrameworkCore" Version="10.4.0" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,109 @@
+{
+  "template": "app",
+  "imports": {
+    "Volo.Abp.LeptonXLiteTheme": {
+      "version": "5.4.0",
+      "isInstalled": true,
+      "creationTime": "09/06/2026 09:22:15 +00:00"
+    },
+    "Volo.Abp.Account": {
+      "version": "10.4.0",
+      "isInstalled": true,
+      "creationTime": "09/06/2026 09:22:15 +00:00"
+    },
+    "Volo.Abp.OpenIddict": {
+      "version": "10.4.0",
+      "isInstalled": true,
+      "creationTime": "09/06/2026 09:22:15 +00:00"
+    },
+    "Volo.Abp.Identity": {
+      "version": "10.4.0",
+      "isInstalled": true,
+      "creationTime": "09/06/2026 09:22:15 +00:00"
+    },
+    "Volo.Abp.TenantManagement": {
+      "version": "10.4.0",
+      "isInstalled": true,
+      "creationTime": "09/06/2026 09:22:15 +00:00"
+    },
+    "Volo.Abp.SettingManagement": {
+      "version": "10.4.0",
+      "isInstalled": true,
+      "creationTime": "09/06/2026 09:22:15 +00:00"
+    },
+    "Volo.Abp.PermissionManagement": {
+      "version": "10.4.0",
+      "isInstalled": true,
+      "creationTime": "09/06/2026 09:22:15 +00:00"
+    },
+    "Volo.Abp.FeatureManagement": {
+      "version": "10.4.0",
+      "isInstalled": true,
+      "creationTime": "09/06/2026 09:22:15 +00:00"
+    }
+  },
+  "folders": {
+    "items": {
+      "src": {},
+      "test": {}
+    }
+  },
+  "packages": {
+    "CoachApp.Application": {
+      "path": "src/CoachApp.Application/CoachApp.Application.abppkg",
+      "folder": "src"
+    },
+    "CoachApp.Application.Tests": {
+      "path": "test/CoachApp.Application.Tests/CoachApp.Application.Tests.abppkg",
+      "folder": "test"
+    },
+    "CoachApp.Domain.Shared": {
+      "path": "src/CoachApp.Domain.Shared/CoachApp.Domain.Shared.abppkg",
+      "folder": "src"
+    },
+    "CoachApp.Application.Contracts": {
+      "path": "src/CoachApp.Application.Contracts/CoachApp.Application.Contracts.abppkg",
+      "folder": "src"
+    },
+    "CoachApp.HttpApi": {
+      "path": "src/CoachApp.HttpApi/CoachApp.HttpApi.abppkg",
+      "folder": "src"
+    },
+    "CoachApp.HttpApi.Client": {
+      "path": "src/CoachApp.HttpApi.Client/CoachApp.HttpApi.Client.abppkg",
+      "folder": "src"
+    },
+    "CoachApp.EntityFrameworkCore.Tests": {
+      "path": "test/CoachApp.EntityFrameworkCore.Tests/CoachApp.EntityFrameworkCore.Tests.abppkg",
+      "folder": "test"
+    },
+    "CoachApp.EntityFrameworkCore": {
+      "path": "src/CoachApp.EntityFrameworkCore/CoachApp.EntityFrameworkCore.abppkg",
+      "folder": "src"
+    },
+    "CoachApp.TestBase": {
+      "path": "test/CoachApp.TestBase/CoachApp.TestBase.abppkg",
+      "folder": "test"
+    },
+    "CoachApp.Domain.Tests": {
+      "path": "test/CoachApp.Domain.Tests/CoachApp.Domain.Tests.abppkg",
+      "folder": "test"
+    },
+    "CoachApp.HttpApi.Client.ConsoleTestApp": {
+      "path": "test/CoachApp.HttpApi.Client.ConsoleTestApp/CoachApp.HttpApi.Client.ConsoleTestApp.abppkg",
+      "folder": "test"
+    },
+    "CoachApp.DbMigrator": {
+      "path": "src/CoachApp.DbMigrator/CoachApp.DbMigrator.abppkg",
+      "folder": "src"
+    },
+    "CoachApp.HttpApi.Host": {
+      "path": "src/CoachApp.HttpApi.Host/CoachApp.HttpApi.Host.abppkg",
+      "folder": "src"
+    },
+    "CoachApp.Domain": {
+      "path": "src/CoachApp.Domain/CoachApp.Domain.abppkg",
+      "folder": "src"
+    }
+  }
+}

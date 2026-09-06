@@ -1,0 +1,23 @@
+<Solution>
+    <Configurations>
+        <Platform Name="Any CPU" />
+    </Configurations>
+    <Folder Name="/src/">
+        <Project Path="src/CoachApp.Domain/CoachApp.Domain.csproj" />
+        <Project Path="src/CoachApp.Application/CoachApp.Application.csproj" />
+        <Project Path="src/CoachApp.EntityFrameworkCore/CoachApp.EntityFrameworkCore.csproj" />
+        <Project Path="src/CoachApp.Domain.Shared/CoachApp.Domain.Shared.csproj" />
+        <Project Path="src/CoachApp.Application.Contracts/CoachApp.Application.Contracts.csproj" />
+        <Project Path="src/CoachApp.HttpApi/CoachApp.HttpApi.csproj" />
+        <Project Path="src/CoachApp.HttpApi.Client/CoachApp.HttpApi.Client.csproj" />
+        <Project Path="src/CoachApp.HttpApi.Host/CoachApp.HttpApi.Host.csproj" />
+        <Project Path="src/CoachApp.DbMigrator/CoachApp.DbMigrator.csproj" />
+    </Folder>
+    <Folder Name="/test/">
+        <Project Path="test/CoachApp.Application.Tests/CoachApp.Application.Tests.csproj" />
+        <Project Path="test/CoachApp.EntityFrameworkCore.Tests/CoachApp.EntityFrameworkCore.Tests.csproj" />
+        <Project Path="test/CoachApp.TestBase/CoachApp.TestBase.csproj" />
+        <Project Path="test/CoachApp.Domain.Tests/CoachApp.Domain.Tests.csproj" />
+        <Project Path="test/CoachApp.HttpApi.Client.ConsoleTestApp/CoachApp.HttpApi.Client.ConsoleTestApp.csproj" />
+    </Folder>
+</Solution>
