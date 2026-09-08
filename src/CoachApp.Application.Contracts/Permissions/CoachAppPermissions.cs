@@ -37,6 +37,14 @@ public static class CoachAppPermissions
             public const string Delete = Default + ".Delete";
         }
 
+        public static class WorkoutPlanTemplates
+        {
+            public const string Default = GroupName + ".Coach.WorkoutPlanTemplates";
+            public const string Create = Default + ".Create";
+            public const string Update = Default + ".Update";
+            public const string Delete = Default + ".Delete";
+        }
+
         public static class Foods
         {
             public const string Default = GroupName + ".Coach.Foods";
@@ -48,6 +56,14 @@ public static class CoachAppPermissions
         public static class NutritionPlans
         {
             public const string Default = GroupName + ".Coach.NutritionPlans";
+            public const string Create = Default + ".Create";
+            public const string Update = Default + ".Update";
+            public const string Delete = Default + ".Delete";
+        }
+
+        public static class NutritionPlanTemplates
+        {
+            public const string Default = GroupName + ".Coach.NutritionPlanTemplates";
             public const string Create = Default + ".Create";
             public const string Update = Default + ".Update";
             public const string Delete = Default + ".Delete";
@@ -81,6 +97,12 @@ public static class CoachAppPermissions
         public static class MyProfile
         {
             public const string Default = GroupName + ".Trainee.MyProfile";
+        }
+
+        /// <summary>Read-only analytics for the signed-in trainee (adherence, completion).</summary>
+        public static class MyDashboard
+        {
+            public const string Default = GroupName + ".Trainee.MyDashboard";
         }
 
         public static class MyWorkoutPlans

@@ -82,6 +82,10 @@
     "NewWorkoutPlan": "خطة تمارين جديدة",
     "EditWorkoutPlan": "تعديل خطة التمارين",
 
+    "Menu:WorkoutPlanTemplates": "قوالب التمارين",
+    "WorkoutPlanTemplates": "قوالب التمارين",
+    "WorkoutPlanTemplate": "قالب تمارين",
+
     "DisplayName:TraineeId": "المتدرب",
     "DisplayName:Sets": "المجموعات",
     "DisplayName:Reps": "التكرارات",
@@ -99,6 +103,11 @@
     "NutritionPlan": "خطة غذائية",
     "NewNutritionPlan": "خطة غذائية جديدة",
     "EditNutritionPlan": "تعديل الخطة الغذائية",
+
+    "Menu:NutritionPlanTemplates": "قوالب التغذية",
+    "NutritionPlanTemplates": "قوالب التغذية",
+    "NutritionPlanTemplate": "قالب تغذية",
+
     "DisplayName:Quantity": "الكمية",
     "DisplayName:TotalCalories": "إجمالي السعرات",
 
@@ -155,6 +164,10 @@
     "Permission:Coach.WorkoutPlans.Create": "إضافة خطة تمارين",
     "Permission:Coach.WorkoutPlans.Update": "تعديل خطة تمارين",
     "Permission:Coach.WorkoutPlans.Delete": "حذف خطة تمارين",
+    "Permission:Coach.WorkoutPlanTemplates": "قوالب التمارين",
+    "Permission:Coach.WorkoutPlanTemplates.Create": "إضافة قالب تمارين",
+    "Permission:Coach.WorkoutPlanTemplates.Update": "تعديل قالب تمارين",
+    "Permission:Coach.WorkoutPlanTemplates.Delete": "حذف قالب تمارين",
     "Permission:Coach.Foods": "مكتبة الأطعمة",
     "Permission:Coach.Foods.Create": "إضافة طعام",
     "Permission:Coach.Foods.Update": "تعديل طعام",
@@ -163,6 +176,10 @@
     "Permission:Coach.NutritionPlans.Create": "إضافة خطة غذائية",
     "Permission:Coach.NutritionPlans.Update": "تعديل خطة غذائية",
     "Permission:Coach.NutritionPlans.Delete": "حذف خطة غذائية",
+    "Permission:Coach.NutritionPlanTemplates": "قوالب التغذية",
+    "Permission:Coach.NutritionPlanTemplates.Create": "إضافة قالب تغذية",
+    "Permission:Coach.NutritionPlanTemplates.Update": "تعديل قالب تغذية",
+    "Permission:Coach.NutritionPlanTemplates.Delete": "حذف قالب تغذية",
     "Permission:Coach.Tracking": "متابعة تقدم المتدرب",
     "Permission:Coach.Progress": "تقدم المتدرب",
     "Permission:Coach.Progress.Create": "إضافة سجل تقدم",
@@ -173,6 +190,7 @@
     "Permission:Coach.Notes.Update": "تعديل ملاحظة",
     "Permission:Coach.Notes.Delete": "حذف ملاحظة",
     "Permission:Trainee.MyProfile": "ملفي الشخصي",
+    "Permission:Trainee.MyDashboard": "لوحة معلوماتي",
     "Permission:Trainee.MyWorkoutPlans": "خطط تماريني",
     "Permission:Trainee.WorkoutLogs": "سجلات التمارين",
     "Permission:Trainee.WorkoutLogs.Create": "تسجيل تمرين",

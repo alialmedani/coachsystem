@@ -4,6 +4,7 @@ using CoachApp.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace CoachApp.Migrations
 {
     [DbContext(typeof(CoachAppDbContext))]
-    partial class CoachAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260908131703_Add_WorkoutPlanTemplates")]
+    partial class Add_WorkoutPlanTemplates
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -303,122 +306,6 @@ namespace CoachApp.Migrations
                     b.HasIndex("NutritionLogId");
 
                     b.ToTable("AppNutritionLogEntries", (string)null);
-                });
-
-            modelBuilder.Entity("CoachApp.Entites.NutritionPlanTemplates.NutritionPlanTemplate", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("nvarchar(40)")
-                        .HasColumnName("ConcurrencyStamp");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("CreationTime");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("CreatorId");
-
-                    b.Property<Guid?>("DeleterId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("DeleterId");
-
-                    b.Property<DateTime?>("DeletionTime")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("DeletionTime");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(512)
-                        .HasColumnType("nvarchar(512)");
-
-                    b.Property<string>("ExtraProperties")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("ExtraProperties");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false)
-                        .HasColumnName("IsDeleted");
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("LastModificationTime");
-
-                    b.Property<Guid?>("LastModifierId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("LastModifierId");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
-
-                    b.Property<Guid?>("TenantId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("TenantId");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TenantId", "Name");
-
-                    b.ToTable("AppNutritionPlanTemplates", (string)null);
-                });
-
-            modelBuilder.Entity("CoachApp.Entites.NutritionPlanTemplates.NutritionTemplateItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("FoodId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("NutritionTemplateMealId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Order")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("Quantity")
-                        .HasColumnType("decimal(9,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FoodId");
-
-                    b.HasIndex("NutritionTemplateMealId");
-
-                    b.ToTable("AppNutritionTemplateItems", (string)null);
-                });
-
-            modelBuilder.Entity("CoachApp.Entites.NutritionPlanTemplates.NutritionTemplateMeal", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
-
-                    b.Property<Guid>("NutritionPlanTemplateId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Order")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NutritionPlanTemplateId");
-
-                    b.ToTable("AppNutritionTemplateMeals", (string)null);
                 });
 
             modelBuilder.Entity("CoachApp.Entites.NutritionPlans.Meal", b =>
@@ -3158,24 +3045,6 @@ namespace CoachApp.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("CoachApp.Entites.NutritionPlanTemplates.NutritionTemplateItem", b =>
-                {
-                    b.HasOne("CoachApp.Entites.NutritionPlanTemplates.NutritionTemplateMeal", null)
-                        .WithMany("Items")
-                        .HasForeignKey("NutritionTemplateMealId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("CoachApp.Entites.NutritionPlanTemplates.NutritionTemplateMeal", b =>
-                {
-                    b.HasOne("CoachApp.Entites.NutritionPlanTemplates.NutritionPlanTemplate", null)
-                        .WithMany("Meals")
-                        .HasForeignKey("NutritionPlanTemplateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("CoachApp.Entites.NutritionPlans.Meal", b =>
                 {
                     b.HasOne("CoachApp.Entites.NutritionPlans.NutritionPlan", null)
@@ -3449,16 +3318,6 @@ namespace CoachApp.Migrations
             modelBuilder.Entity("CoachApp.Entites.NutritionLogs.NutritionLog", b =>
                 {
                     b.Navigation("Entries");
-                });
-
-            modelBuilder.Entity("CoachApp.Entites.NutritionPlanTemplates.NutritionPlanTemplate", b =>
-                {
-                    b.Navigation("Meals");
-                });
-
-            modelBuilder.Entity("CoachApp.Entites.NutritionPlanTemplates.NutritionTemplateMeal", b =>
-                {
-                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("CoachApp.Entites.NutritionPlans.Meal", b =>

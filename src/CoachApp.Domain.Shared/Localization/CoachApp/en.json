@@ -78,6 +78,10 @@
     "NewWorkoutPlan": "New Workout Plan",
     "EditWorkoutPlan": "Edit Workout Plan",
 
+    "Menu:WorkoutPlanTemplates": "Workout Templates",
+    "WorkoutPlanTemplates": "Workout Templates",
+    "WorkoutPlanTemplate": "Workout Template",
+
     "DisplayName:TraineeId": "Trainee",
     "DisplayName:Sets": "Sets",
     "DisplayName:Reps": "Reps",
@@ -95,6 +99,11 @@
     "NutritionPlan": "Nutrition Plan",
     "NewNutritionPlan": "New Nutrition Plan",
     "EditNutritionPlan": "Edit Nutrition Plan",
+
+    "Menu:NutritionPlanTemplates": "Nutrition Templates",
+    "NutritionPlanTemplates": "Nutrition Templates",
+    "NutritionPlanTemplate": "Nutrition Template",
+
     "DisplayName:Quantity": "Quantity",
     "DisplayName:TotalCalories": "Total Calories",
 
@@ -151,6 +160,10 @@
     "Permission:Coach.WorkoutPlans.Create": "Create workout plan",
     "Permission:Coach.WorkoutPlans.Update": "Edit workout plan",
     "Permission:Coach.WorkoutPlans.Delete": "Delete workout plan",
+    "Permission:Coach.WorkoutPlanTemplates": "Workout templates",
+    "Permission:Coach.WorkoutPlanTemplates.Create": "Create workout template",
+    "Permission:Coach.WorkoutPlanTemplates.Update": "Edit workout template",
+    "Permission:Coach.WorkoutPlanTemplates.Delete": "Delete workout template",
     "Permission:Coach.Foods": "Food library",
     "Permission:Coach.Foods.Create": "Create food",
     "Permission:Coach.Foods.Update": "Edit food",
@@ -159,6 +172,10 @@
     "Permission:Coach.NutritionPlans.Create": "Create nutrition plan",
     "Permission:Coach.NutritionPlans.Update": "Edit nutrition plan",
     "Permission:Coach.NutritionPlans.Delete": "Delete nutrition plan",
+    "Permission:Coach.NutritionPlanTemplates": "Nutrition templates",
+    "Permission:Coach.NutritionPlanTemplates.Create": "Create nutrition template",
+    "Permission:Coach.NutritionPlanTemplates.Update": "Edit nutrition template",
+    "Permission:Coach.NutritionPlanTemplates.Delete": "Delete nutrition template",
     "Permission:Coach.Tracking": "Track trainee progress",
     "Permission:Coach.Progress": "Trainee progress",
     "Permission:Coach.Progress.Create": "Add progress entry",
@@ -169,6 +186,7 @@
     "Permission:Coach.Notes.Update": "Edit note",
     "Permission:Coach.Notes.Delete": "Delete note",
     "Permission:Trainee.MyProfile": "My profile",
+    "Permission:Trainee.MyDashboard": "My dashboard",
     "Permission:Trainee.MyWorkoutPlans": "My workout plans",
     "Permission:Trainee.WorkoutLogs": "Workout logs",
     "Permission:Trainee.WorkoutLogs.Create": "Log a workout",
