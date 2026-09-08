@@ -88,6 +88,15 @@
 
     "TheSelectedTraineeDoesNotExist": "The selected trainee does not exist.",
     "OneOrMoreExercisesDoNotExist": "One or more selected exercises do not exist.",
+    "OneOrMoreFoodsDoNotExist": "One or more selected foods do not exist.",
+
+    "Menu:NutritionPlans": "Nutrition Plans",
+    "NutritionPlans": "Nutrition Plans",
+    "NutritionPlan": "Nutrition Plan",
+    "NewNutritionPlan": "New Nutrition Plan",
+    "EditNutritionPlan": "Edit Nutrition Plan",
+    "DisplayName:Quantity": "Quantity",
+    "DisplayName:TotalCalories": "Total Calories",
 
     "Menu:WorkoutLogs": "Workout Logs",
     "WorkoutLogs": "Workout Logs",

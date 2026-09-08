@@ -15,6 +15,7 @@ using Volo.Abp.BlobStoring.Database.EntityFrameworkCore;
 using Volo.Abp.TenantManagement.EntityFrameworkCore;
 using Volo.Abp.Studio;
 using CoachApp.Entites.WorkoutPlans;
+using CoachApp.Entites.NutritionPlans;
 
 namespace CoachApp.EntityFrameworkCore;
 
@@ -47,9 +48,9 @@ public class CoachAppEntityFrameworkCoreModule : AbpModule
                  * default repositories only for aggregate roots */
             options.AddDefaultRepositories(includeAllEntities: true);
 
-            // Custom repo loads the WorkoutPlan aggregate graph (Days -> Exercises)
-            // when GetAsync(..., includeDetails: true) is called.
+            // Custom repos eager-load the nested aggregate graphs on includeDetails: true.
             options.AddRepository<WorkoutPlan, EfCoreWorkoutPlanRepository>();
+            options.AddRepository<NutritionPlan, EfCoreNutritionPlanRepository>();
         });
 
         if (AbpStudioAnalyzeHelper.IsInAnalyzeMode)

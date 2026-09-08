@@ -92,6 +92,15 @@
 
     "TheSelectedTraineeDoesNotExist": "المتدرب المحدد غير موجود.",
     "OneOrMoreExercisesDoNotExist": "واحد أو أكثر من التمارين المحددة غير موجود.",
+    "OneOrMoreFoodsDoNotExist": "واحد أو أكثر من الأطعمة المحددة غير موجود.",
+
+    "Menu:NutritionPlans": "الخطط الغذائية",
+    "NutritionPlans": "الخطط الغذائية",
+    "NutritionPlan": "خطة غذائية",
+    "NewNutritionPlan": "خطة غذائية جديدة",
+    "EditNutritionPlan": "تعديل الخطة الغذائية",
+    "DisplayName:Quantity": "الكمية",
+    "DisplayName:TotalCalories": "إجمالي السعرات",
 
     "Menu:WorkoutLogs": "سجلات التمارين",
     "WorkoutLogs": "سجلات التمارين",
