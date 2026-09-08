@@ -58,6 +58,22 @@ public static class CoachAppPermissions
         {
             public const string Default = GroupName + ".Coach.Tracking";
         }
+
+        public static class Progress
+        {
+            public const string Default = GroupName + ".Coach.Progress";
+            public const string Create = Default + ".Create";
+            public const string Update = Default + ".Update";
+            public const string Delete = Default + ".Delete";
+        }
+
+        public static class Notes
+        {
+            public const string Default = GroupName + ".Coach.Notes";
+            public const string Create = Default + ".Create";
+            public const string Update = Default + ".Update";
+            public const string Delete = Default + ".Delete";
+        }
     }
 
     public static class Trainee
@@ -87,6 +103,17 @@ public static class CoachAppPermissions
         {
             public const string Default = GroupName + ".Trainee.NutritionLogs";
             public const string Create = Default + ".Create";
+        }
+
+        public static class MyProgress
+        {
+            public const string Default = GroupName + ".Trainee.MyProgress";
+            public const string Create = Default + ".Create";
+        }
+
+        public static class MyNotes
+        {
+            public const string Default = GroupName + ".Trainee.MyNotes";
         }
     }
 }

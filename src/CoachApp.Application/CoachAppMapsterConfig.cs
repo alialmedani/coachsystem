@@ -2,6 +2,8 @@ using CoachApp.Entites.Exercises;
 using CoachApp.Entites.Foods;
 using CoachApp.Entites.NutritionLogs;
 using CoachApp.Entites.NutritionPlans;
+using CoachApp.Entites.ProgressEntries;
+using CoachApp.Entites.TraineeNotes;
 using CoachApp.Entites.Trainees;
 using CoachApp.Entites.WorkoutLogs;
 using CoachApp.Entites.WorkoutPlans;
@@ -46,5 +48,11 @@ public static class CoachAppMapsterConfig
         // ── NutritionLogs (food name + macros enriched in the app service) ──────
         TypeAdapterConfig<NutritionLog, NutritionLogDto>.NewConfig();
         TypeAdapterConfig<NutritionLogEntry, NutritionLogEntryDto>.NewConfig();
+
+        // ── ProgressEntries ─────────────────────────────────────────────────────
+        TypeAdapterConfig<ProgressEntry, ProgressEntryDto>.NewConfig();
+
+        // ── TraineeNotes ────────────────────────────────────────────────────────
+        TypeAdapterConfig<TraineeNote, TraineeNoteDto>.NewConfig();
     }
 }

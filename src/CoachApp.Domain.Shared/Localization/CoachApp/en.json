@@ -107,6 +107,22 @@
     "NutritionLogs": "Nutrition Logs",
     "NutritionLog": "Nutrition Log",
 
+    "Menu:Progress": "Progress",
+    "Progress": "Progress",
+    "ProgressEntry": "Progress Entry",
+    "DisplayName:WeightKg": "Weight (kg)",
+    "DisplayName:BodyFatPercent": "Body Fat (%)",
+    "DisplayName:ChestCm": "Chest (cm)",
+    "DisplayName:WaistCm": "Waist (cm)",
+    "DisplayName:HipsCm": "Hips (cm)",
+    "DisplayName:ArmCm": "Arm (cm)",
+    "DisplayName:ThighCm": "Thigh (cm)",
+
+    "Menu:Notes": "Notes",
+    "Notes": "Notes",
+    "Note": "Note",
+    "DisplayName:Text": "Note",
+
     "Menu:Foods": "Foods",
     "Foods": "Foods",
     "Food": "Food",
@@ -144,12 +160,23 @@
     "Permission:Coach.NutritionPlans.Update": "Edit nutrition plan",
     "Permission:Coach.NutritionPlans.Delete": "Delete nutrition plan",
     "Permission:Coach.Tracking": "Track trainee progress",
+    "Permission:Coach.Progress": "Trainee progress",
+    "Permission:Coach.Progress.Create": "Add progress entry",
+    "Permission:Coach.Progress.Update": "Edit progress entry",
+    "Permission:Coach.Progress.Delete": "Delete progress entry",
+    "Permission:Coach.Notes": "Trainee notes",
+    "Permission:Coach.Notes.Create": "Add note",
+    "Permission:Coach.Notes.Update": "Edit note",
+    "Permission:Coach.Notes.Delete": "Delete note",
     "Permission:Trainee.MyProfile": "My profile",
     "Permission:Trainee.MyWorkoutPlans": "My workout plans",
     "Permission:Trainee.WorkoutLogs": "Workout logs",
     "Permission:Trainee.WorkoutLogs.Create": "Log a workout",
     "Permission:Trainee.MyNutritionPlans": "My nutrition plans",
     "Permission:Trainee.NutritionLogs": "Nutrition logs",
-    "Permission:Trainee.NutritionLogs.Create": "Log nutrition"
+    "Permission:Trainee.NutritionLogs.Create": "Log nutrition",
+    "Permission:Trainee.MyProgress": "My progress",
+    "Permission:Trainee.MyProgress.Create": "Log progress",
+    "Permission:Trainee.MyNotes": "My notes"
   }
 }

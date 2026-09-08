@@ -17,6 +17,8 @@ public class CoachAppPermissionDefinitionProvider : PermissionDefinitionProvider
         AddCrud(group, CoachAppPermissions.Coach.Foods.Default, "Coach.Foods");
         AddCrud(group, CoachAppPermissions.Coach.NutritionPlans.Default, "Coach.NutritionPlans");
         group.AddPermission(CoachAppPermissions.Coach.Tracking.Default, L("Permission:Coach.Tracking"));
+        AddCrud(group, CoachAppPermissions.Coach.Progress.Default, "Coach.Progress");
+        AddCrud(group, CoachAppPermissions.Coach.Notes.Default, "Coach.Notes");
 
         // ── Trainee (self-service) ────────────────────────────────────────────
         group.AddPermission(CoachAppPermissions.Trainee.MyProfile.Default, L("Permission:Trainee.MyProfile"));
@@ -29,6 +31,11 @@ public class CoachAppPermissionDefinitionProvider : PermissionDefinitionProvider
 
         var nutritionLogs = group.AddPermission(CoachAppPermissions.Trainee.NutritionLogs.Default, L("Permission:Trainee.NutritionLogs"));
         nutritionLogs.AddChild(CoachAppPermissions.Trainee.NutritionLogs.Create, L("Permission:Trainee.NutritionLogs.Create"));
+
+        var myProgress = group.AddPermission(CoachAppPermissions.Trainee.MyProgress.Default, L("Permission:Trainee.MyProgress"));
+        myProgress.AddChild(CoachAppPermissions.Trainee.MyProgress.Create, L("Permission:Trainee.MyProgress.Create"));
+
+        group.AddPermission(CoachAppPermissions.Trainee.MyNotes.Default, L("Permission:Trainee.MyNotes"));
     }
 
     private static void AddCrud(PermissionGroupDefinition group, string defaultName, string localizationKey)

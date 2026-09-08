@@ -18,6 +18,8 @@ using CoachApp.Entites.Exercises;
 using CoachApp.Entites.Foods;
 using CoachApp.Entites.NutritionLogs;
 using CoachApp.Entites.NutritionPlans;
+using CoachApp.Entites.ProgressEntries;
+using CoachApp.Entites.TraineeNotes;
 using CoachApp.Entites.Trainees;
 using CoachApp.Entites.WorkoutLogs;
 using CoachApp.Entites.WorkoutPlans;
@@ -47,6 +49,8 @@ public class CoachAppDbContext :
     public DbSet<MealItem> MealItems { get; set; }
     public DbSet<NutritionLog> NutritionLogs { get; set; }
     public DbSet<NutritionLogEntry> NutritionLogEntries { get; set; }
+    public DbSet<ProgressEntry> ProgressEntries { get; set; }
+    public DbSet<TraineeNote> TraineeNotes { get; set; }
 
     #region Entities from the modules
 
