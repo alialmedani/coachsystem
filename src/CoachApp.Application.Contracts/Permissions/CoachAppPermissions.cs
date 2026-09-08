@@ -37,6 +37,14 @@ public static class CoachAppPermissions
             public const string Delete = Default + ".Delete";
         }
 
+        public static class WorkoutPlanTemplates
+        {
+            public const string Default = GroupName + ".Coach.WorkoutPlanTemplates";
+            public const string Create = Default + ".Create";
+            public const string Update = Default + ".Update";
+            public const string Delete = Default + ".Delete";
+        }
+
         public static class Foods
         {
             public const string Default = GroupName + ".Coach.Foods";
@@ -53,10 +61,34 @@ public static class CoachAppPermissions
             public const string Delete = Default + ".Delete";
         }
 
+        public static class NutritionPlanTemplates
+        {
+            public const string Default = GroupName + ".Coach.NutritionPlanTemplates";
+            public const string Create = Default + ".Create";
+            public const string Update = Default + ".Update";
+            public const string Delete = Default + ".Delete";
+        }
+
         /// <summary>View a trainee's workout/nutrition logs and progress.</summary>
         public static class Tracking
         {
             public const string Default = GroupName + ".Coach.Tracking";
+        }
+
+        public static class Progress
+        {
+            public const string Default = GroupName + ".Coach.Progress";
+            public const string Create = Default + ".Create";
+            public const string Update = Default + ".Update";
+            public const string Delete = Default + ".Delete";
+        }
+
+        public static class Notes
+        {
+            public const string Default = GroupName + ".Coach.Notes";
+            public const string Create = Default + ".Create";
+            public const string Update = Default + ".Update";
+            public const string Delete = Default + ".Delete";
         }
     }
 
@@ -65,6 +97,12 @@ public static class CoachAppPermissions
         public static class MyProfile
         {
             public const string Default = GroupName + ".Trainee.MyProfile";
+        }
+
+        /// <summary>Read-only analytics for the signed-in trainee (adherence, completion).</summary>
+        public static class MyDashboard
+        {
+            public const string Default = GroupName + ".Trainee.MyDashboard";
         }
 
         public static class MyWorkoutPlans
@@ -87,6 +125,17 @@ public static class CoachAppPermissions
         {
             public const string Default = GroupName + ".Trainee.NutritionLogs";
             public const string Create = Default + ".Create";
+        }
+
+        public static class MyProgress
+        {
+            public const string Default = GroupName + ".Trainee.MyProgress";
+            public const string Create = Default + ".Create";
+        }
+
+        public static class MyNotes
+        {
+            public const string Default = GroupName + ".Trainee.MyNotes";
         }
     }
 }

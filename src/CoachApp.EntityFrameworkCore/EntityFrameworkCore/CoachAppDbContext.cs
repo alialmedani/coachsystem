@@ -15,9 +15,16 @@ using Volo.Abp.OpenIddict.EntityFrameworkCore;
 using Volo.Abp.TenantManagement;
 using Volo.Abp.TenantManagement.EntityFrameworkCore;
 using CoachApp.Entites.Exercises;
+using CoachApp.Entites.Foods;
+using CoachApp.Entites.NutritionLogs;
+using CoachApp.Entites.NutritionPlans;
+using CoachApp.Entites.NutritionPlanTemplates;
+using CoachApp.Entites.ProgressEntries;
+using CoachApp.Entites.TraineeNotes;
 using CoachApp.Entites.Trainees;
 using CoachApp.Entites.WorkoutLogs;
 using CoachApp.Entites.WorkoutPlans;
+using CoachApp.Entites.WorkoutPlanTemplates;
 
 namespace CoachApp.EntityFrameworkCore;
 
@@ -33,11 +40,25 @@ public class CoachAppDbContext :
 
     public DbSet<Trainee> Trainees { get; set; }
     public DbSet<Exercise> Exercises { get; set; }
+    public DbSet<Food> Foods { get; set; }
     public DbSet<WorkoutPlan> WorkoutPlans { get; set; }
     public DbSet<WorkoutDay> WorkoutDays { get; set; }
     public DbSet<WorkoutExercise> WorkoutExercises { get; set; }
+    public DbSet<WorkoutPlanTemplate> WorkoutPlanTemplates { get; set; }
+    public DbSet<WorkoutTemplateDay> WorkoutTemplateDays { get; set; }
+    public DbSet<WorkoutTemplateExercise> WorkoutTemplateExercises { get; set; }
     public DbSet<WorkoutLog> WorkoutLogs { get; set; }
     public DbSet<WorkoutLogEntry> WorkoutLogEntries { get; set; }
+    public DbSet<NutritionPlan> NutritionPlans { get; set; }
+    public DbSet<Meal> Meals { get; set; }
+    public DbSet<MealItem> MealItems { get; set; }
+    public DbSet<NutritionPlanTemplate> NutritionPlanTemplates { get; set; }
+    public DbSet<NutritionTemplateMeal> NutritionTemplateMeals { get; set; }
+    public DbSet<NutritionTemplateItem> NutritionTemplateItems { get; set; }
+    public DbSet<NutritionLog> NutritionLogs { get; set; }
+    public DbSet<NutritionLogEntry> NutritionLogEntries { get; set; }
+    public DbSet<ProgressEntry> ProgressEntries { get; set; }
+    public DbSet<TraineeNote> TraineeNotes { get; set; }
 
     #region Entities from the modules
 

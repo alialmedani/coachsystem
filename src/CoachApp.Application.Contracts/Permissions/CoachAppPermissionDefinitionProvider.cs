@@ -14,12 +14,17 @@ public class CoachAppPermissionDefinitionProvider : PermissionDefinitionProvider
         AddCrud(group, CoachAppPermissions.Coach.Trainees.Default, "Coach.Trainees");
         AddCrud(group, CoachAppPermissions.Coach.Exercises.Default, "Coach.Exercises");
         AddCrud(group, CoachAppPermissions.Coach.WorkoutPlans.Default, "Coach.WorkoutPlans");
+        AddCrud(group, CoachAppPermissions.Coach.WorkoutPlanTemplates.Default, "Coach.WorkoutPlanTemplates");
         AddCrud(group, CoachAppPermissions.Coach.Foods.Default, "Coach.Foods");
         AddCrud(group, CoachAppPermissions.Coach.NutritionPlans.Default, "Coach.NutritionPlans");
+        AddCrud(group, CoachAppPermissions.Coach.NutritionPlanTemplates.Default, "Coach.NutritionPlanTemplates");
         group.AddPermission(CoachAppPermissions.Coach.Tracking.Default, L("Permission:Coach.Tracking"));
+        AddCrud(group, CoachAppPermissions.Coach.Progress.Default, "Coach.Progress");
+        AddCrud(group, CoachAppPermissions.Coach.Notes.Default, "Coach.Notes");
 
         // ── Trainee (self-service) ────────────────────────────────────────────
         group.AddPermission(CoachAppPermissions.Trainee.MyProfile.Default, L("Permission:Trainee.MyProfile"));
+        group.AddPermission(CoachAppPermissions.Trainee.MyDashboard.Default, L("Permission:Trainee.MyDashboard"));
         group.AddPermission(CoachAppPermissions.Trainee.MyWorkoutPlans.Default, L("Permission:Trainee.MyWorkoutPlans"));
 
         var workoutLogs = group.AddPermission(CoachAppPermissions.Trainee.WorkoutLogs.Default, L("Permission:Trainee.WorkoutLogs"));
@@ -29,6 +34,11 @@ public class CoachAppPermissionDefinitionProvider : PermissionDefinitionProvider
 
         var nutritionLogs = group.AddPermission(CoachAppPermissions.Trainee.NutritionLogs.Default, L("Permission:Trainee.NutritionLogs"));
         nutritionLogs.AddChild(CoachAppPermissions.Trainee.NutritionLogs.Create, L("Permission:Trainee.NutritionLogs.Create"));
+
+        var myProgress = group.AddPermission(CoachAppPermissions.Trainee.MyProgress.Default, L("Permission:Trainee.MyProgress"));
+        myProgress.AddChild(CoachAppPermissions.Trainee.MyProgress.Create, L("Permission:Trainee.MyProgress.Create"));
+
+        group.AddPermission(CoachAppPermissions.Trainee.MyNotes.Default, L("Permission:Trainee.MyNotes"));
     }
 
     private static void AddCrud(PermissionGroupDefinition group, string defaultName, string localizationKey)

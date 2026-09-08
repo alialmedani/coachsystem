@@ -4,6 +4,9 @@ using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using CoachApp.Entites.Exercises;
+using CoachApp.Entites.WorkoutLogs;
+using CoachApp.Entites.WorkoutPlans;
+using CoachApp.Entites.WorkoutPlanTemplates;
 using CoachApp.Permissions;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
@@ -17,10 +20,20 @@ namespace CoachApp.Apis.Exercises;
 public class ExerciseAppService : CoachAppAppService, IExerciseAppService
 {
     private readonly IRepository<Exercise, Guid> _exerciseRepository;
+    private readonly IRepository<WorkoutExercise, Guid> _workoutExerciseRepository;
+    private readonly IRepository<WorkoutTemplateExercise, Guid> _templateExerciseRepository;
+    private readonly IRepository<WorkoutLogEntry, Guid> _workoutLogEntryRepository;
 
-    public ExerciseAppService(IRepository<Exercise, Guid> exerciseRepository)
+    public ExerciseAppService(
+        IRepository<Exercise, Guid> exerciseRepository,
+        IRepository<WorkoutExercise, Guid> workoutExerciseRepository,
+        IRepository<WorkoutTemplateExercise, Guid> templateExerciseRepository,
+        IRepository<WorkoutLogEntry, Guid> workoutLogEntryRepository)
     {
         _exerciseRepository = exerciseRepository;
+        _workoutExerciseRepository = workoutExerciseRepository;
+        _templateExerciseRepository = templateExerciseRepository;
+        _workoutLogEntryRepository = workoutLogEntryRepository;
     }
 
     public virtual async Task<ExerciseDto> GetAsync(Guid id)
@@ -99,6 +112,14 @@ public class ExerciseAppService : CoachAppAppService, IExerciseAppService
     [Authorize(CoachAppPermissions.Coach.Exercises.Delete)]
     public virtual async Task DeleteAsync(Guid id)
     {
+        // Don't orphan references: block the delete if the exercise is used anywhere.
+        if (await _workoutExerciseRepository.CountAsync(x => x.ExerciseId == id) > 0
+            || await _templateExerciseRepository.CountAsync(x => x.ExerciseId == id) > 0
+            || await _workoutLogEntryRepository.CountAsync(x => x.ExerciseId == id) > 0)
+        {
+            throw new UserFriendlyException(L["ExerciseInUse"]);
+        }
+
         await _exerciseRepository.DeleteAsync(id);
     }
 }
