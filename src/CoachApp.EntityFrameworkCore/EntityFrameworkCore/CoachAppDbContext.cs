@@ -14,6 +14,8 @@ using Volo.Abp.SettingManagement.EntityFrameworkCore;
 using Volo.Abp.OpenIddict.EntityFrameworkCore;
 using Volo.Abp.TenantManagement;
 using Volo.Abp.TenantManagement.EntityFrameworkCore;
+using CoachApp.Entites.Trainees;
+using CoachApp.Entites.TrainingPlans;
 
 namespace CoachApp.EntityFrameworkCore;
 
@@ -27,6 +29,8 @@ public class CoachAppDbContext :
 {
     /* Add DbSet properties for your Aggregate Roots / Entities here. */
 
+    public DbSet<Trainee> Trainees { get; set; }
+    public DbSet<TrainingPlan> TrainingPlans { get; set; }
 
     #region Entities from the modules
 
@@ -78,14 +82,10 @@ public class CoachAppDbContext :
         builder.ConfigureOpenIddict();
         builder.ConfigureTenantManagement();
         builder.ConfigureBlobStoring();
-        
-        /* Configure your own tables/entities inside here */
 
-        //builder.Entity<YourEntity>(b =>
-        //{
-        //    b.ToTable(CoachAppConsts.DbTablePrefix + "YourEntities", CoachAppConsts.DbSchema);
-        //    b.ConfigureByConvention(); //auto configure for the base class props
-        //    //...
-        //});
+        /* Configure your own tables/entities. Each aggregate has an
+         * IEntityTypeConfiguration under EntityConfigurations/<Feature>/,
+         * discovered and applied here in one call. */
+        builder.ApplyConfigurationsFromAssembly(typeof(CoachAppDbContext).Assembly);
     }
 }

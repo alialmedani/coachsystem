@@ -8,146 +8,132 @@ alwaysApply: false
 
 # ABP Dependency Rules
 
-## Core Principles (All Templates)
+CoachApp is a **single-application**, layered ABP solution (no `modules/` folder, no separate
+microservices). These rules keep the standard ABP layer dependency direction intact.
 
-These principles apply regardless of solution structure:
+## Core Principles
 
-1. **Domain logic never depends on infrastructure** (no DbContext in domain/application)
-2. **Use abstractions** (interfaces) for dependencies
+1. **Domain logic never depends on infrastructure** (no DbContext in Domain or Application)
+2. **Use abstractions** (interfaces / repositories) for dependencies
 3. **Higher layers depend on lower layers**, never the reverse
-4. **Data access through repositories**, not direct DbContext
+4. **Data access through repositories** (generic `IRepository<T, Guid>`), not direct DbContext
 
-## Layered Template Structure
-
-> **Note**: This section applies to layered templates (app, module). Single-layer and microservice templates have different structures.
+## Layered Structure
 
 ```
-Domain.Shared    → Constants, enums, localization keys
+Domain.Shared    → Consts, enums, error codes, localization keys
        ↑
-    Domain       → Entities, repository interfaces, domain services
+    Domain       → Entities / aggregate roots (a *Manager only for a real cross-aggregate rule)
        ↑
-Application.Contracts → App service interfaces, DTOs
+Application.Contracts → App service interfaces, DTOs, permissions
        ↑
-  Application    → App service implementations
+  Application    → App service implementations, Mapster config
        ↑
-   HttpApi       → REST controllers (optional)
+EntityFrameworkCore → Single CoachAppDbContext, EF configs, migrations
        ↑
-     Host        → Final application with DI and middleware
+     Host        → Final application (DI, middleware, conventional controllers, Swagger)
 ```
 
-### Layered Dependency Direction
+### Dependency Direction
 
 | Project | Can Reference | Referenced By |
 |---------|---------------|---------------|
 | Domain.Shared | Nothing | All |
-| Domain | Domain.Shared | Application, Data layer |
-| Application.Contracts | Domain.Shared | Application, HttpApi, Clients |
-| Application | Domain, Contracts | Host |
-| EntityFrameworkCore/MongoDB | Domain | Host only |
-| HttpApi | Contracts only | Host |
+| Domain | Domain.Shared | Application, EntityFrameworkCore |
+| Application.Contracts | Domain.Shared | Application, Host, Clients |
+| Application | Domain, Application.Contracts | Host |
+| EntityFrameworkCore | Domain | Host, DbMigrator |
+| Host | Application, EntityFrameworkCore | — |
+
+> Note: `Application.Contracts` references only `Domain.Shared`, so DTOs/interfaces may use consts,
+> enums and error codes — but never entities. Entities never leave the Application layer.
 
 ## Critical Rules
 
 ### ❌ Never Do
 ```csharp
 // Application layer accessing DbContext directly
-public class BookAppService : ApplicationService
+public class TraineeAppService : CoachAppAppService
 {
-    private readonly MyDbContext _dbContext; // ❌ WRONG
+    private readonly CoachAppDbContext _dbContext; // ❌ WRONG — use IRepository<Trainee, Guid>
 }
 
-// Domain depending on application layer
-public class BookManager : DomainService
+// Domain depending on the application layer
+public class SomeManager : DomainService
 {
-    private readonly IBookAppService _appService; // ❌ WRONG
+    private readonly ITraineeAppService _appService; // ❌ WRONG
 }
 
-// HttpApi depending on Application implementation
-public class BookController : AbpController
+// Host/HttpApi depending on the AppService implementation
+public class SomeController : AbpController
 {
-    private readonly BookAppService _bookAppService; // ❌ WRONG - Use interface
+    private readonly TraineeAppService _service; // ❌ WRONG — depend on ITraineeAppService
 }
 ```
 
 ### ✅ Always Do
 ```csharp
-// Application layer using repository abstraction
-public class BookAppService : ApplicationService
+// Fat AppService using the generic repository abstraction
+public class TraineeAppService : CoachAppAppService, ITraineeAppService
 {
-    private readonly IBookRepository _bookRepository; // ✅ CORRECT
+    private readonly IRepository<Trainee, Guid> _traineeRepository; // ✅ CORRECT
 }
 
-// Domain service using domain abstractions
-public class BookManager : DomainService
+// Cross-feature read/existence check — inject the other feature's generic repository
+public class TrainingPlanAppService : CoachAppAppService, ITrainingPlanAppService
 {
-    private readonly IBookRepository _bookRepository; // ✅ CORRECT
-}
-
-// HttpApi depending on contracts only
-public class BookController : AbpController
-{
-    private readonly IBookAppService _bookAppService; // ✅ CORRECT
+    private readonly IRepository<TrainingPlan, Guid> _trainingPlanRepository;
+    private readonly IRepository<Trainee, Guid> _traineeRepository; // ✅ CORRECT
 }
 ```
 
-## Repository Pattern Enforcement
+## Repository Pattern
 
-### Interface Location
+CoachApp prefers the **generic `IRepository<T, Guid>`** — the fat AppService does querying inline
+(`GetQueryableAsync`, `WhereIf`, `System.Linq.Dynamic.Core` `.OrderBy(sorting)`, `.Skip().Take()`,
+`AsyncExecuter`). Add a **custom repository only for a genuinely complex, reused query**:
+
+### Interface Location (Domain)
 ```csharp
-// In Domain project
-public interface IBookRepository : IRepository<Book, Guid>
+public interface ITraineeRepository : IRepository<Trainee, Guid>
 {
-    Task<Book> FindByNameAsync(string name);
+    Task<List<Trainee>> GetActiveByCoachAsync(Guid coachId);
 }
 ```
 
-### Implementation Location
+### Implementation Location (EntityFrameworkCore)
 ```csharp
-// In EntityFrameworkCore project
-public class BookRepository : EfCoreRepository<MyDbContext, Book, Guid>, IBookRepository
-{
-    // Implementation
-}
-
-// In MongoDB project
-public class BookRepository : MongoDbRepository<MyDbContext, Book, Guid>, IBookRepository
+public class TraineeRepository : EfCoreRepository<CoachAppDbContext, Trainee, Guid>, ITraineeRepository
 {
     // Implementation
 }
 ```
 
-## Multi-Application Scenarios
+## Cross-Feature Communication (single app)
 
-When you have multiple applications (e.g., Admin + Public API):
+Features live in the same app, so a **direct call** to the other feature's app service, or
+injecting its generic `IRepository<T, Guid>` for a read/existence check, is fine (as
+`TrainingPlanAppService` checks the trainee exists). For decoupled reactions, use ABP local
+events (`ILocalEventBus` + `ILocalEventHandler<>`). There are **no cross-module project
+references** to manage — everything is one app under `src/`.
 
-### Vertical Separation
-```
-MyProject.Admin.Application      - Admin-specific services
-MyProject.Public.Application     - Public-specific services
-MyProject.Domain                 - Shared domain (both reference this)
-```
+## Enforcement Checklist
 
-### Rules
-- Admin and Public application layers **MUST NOT** reference each other
-- Share domain logic, not application logic
-- Each vertical can have its own DTOs even if similar
-
-## Enforcement Checklist (Layered Templates)
-
-When adding a new feature:
-1. **Entity changes?** → Domain project
-2. **Constants/enums?** → Domain.Shared project
-3. **Repository interface?** → Domain project (only if custom queries needed)
-4. **Repository implementation?** → EntityFrameworkCore/MongoDB project
-5. **DTOs and service interface?** → Application.Contracts project
-6. **Service implementation?** → Application project
-7. **API endpoint?** → HttpApi project (if not using auto API controllers)
+When adding a feature:
+1. **Consts / enums / error codes?** → Domain.Shared (`Entites/<Feature>/`, `Enums/`)
+2. **Entity changes?** → Domain (`Entites/<Feature>/`); `*Manager` only for a real cross-aggregate rule
+3. **DTOs, service interface, permissions?** → Application.Contracts (`Entites/<Feature>/`, `Permissions/`)
+4. **AppService + Mapster line?** → Application (`Apis/<Feature>/`, `CoachAppMapsterConfig`)
+5. **EF config + DbSet?** → EntityFrameworkCore (`EntityConfigurations/<Feature>/`, `CoachAppDbContext`)
+6. **API endpoint?** → auto-exposed via conventional controllers (no hand-written controller needed)
 
 ## Common Violations to Watch
 
 | Violation | Impact | Fix |
 |-----------|--------|-----|
-| DbContext in Application | Breaks DB independence | Use repository |
-| Entity in DTO | Exposes internals | Map to DTO |
-| IQueryable in interface | Breaks abstraction | Return concrete types |
-| Cross-module app service call | Tight coupling | Use events or domain |
+| DbContext in Application | Breaks DB independence | Use `IRepository<T, Guid>` |
+| Entity in DTO / returned from service | Exposes internals | Map to DTO via `ObjectMapper` (Mapster) |
+| `IQueryable` in a service interface | Breaks abstraction | Return DTOs / paged results |
+| Custom repository for plain CRUD | Needless indirection | Use the generic repository + inline query |
+| `*Factory`/`*Manager` for simple CRUD | Over-engineering | `static Create` on the entity; checks in the AppService |
+| Mapperly/AutoMapper/FluentValidation added | Wrong stack | Mapster + DataAnnotations only |

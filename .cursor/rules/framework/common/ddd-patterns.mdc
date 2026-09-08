@@ -24,6 +24,15 @@ ABP promotes **Rich Domain Model** pattern where entities contain both data AND 
 
 **Encapsulation is key**: Protect entity state by using private setters and exposing behavior through methods.
 
+> **CoachApp pragmatic variant (the enforced convention — mirror the `Trainee`/`TrainingPlan` reference).**
+> This file teaches classic rich-DDD; CoachApp applies a lighter version. In CoachApp, entities use
+> **public setters** for plain fields and a **`public static Create(Guid id, …, Guid? tenantId)`** factory
+> method (not a separate `*Factory` class) that validates required fields against `<Entity>Consts`. Keep a
+> field `protected set` and guard it with a **behavior method** only when it carries a real invariant
+> (e.g. `TrainingPlan.SetSchedule` → `EndDate > StartDate`). Cross-aggregate rules that need the repository
+> (uniqueness, existence) live in the **fat application service**, not the entity. Add a `*Manager :
+> DomainService` (below) only for a genuine multi-aggregate domain rule — not for simple CRUD.
+
 ## Entities
 
 ### Entity Example (Rich Model)

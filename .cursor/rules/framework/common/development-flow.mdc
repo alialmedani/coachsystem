@@ -16,284 +16,281 @@ alwaysApply: false
 
 > **Tutorials**: https://abp.io/docs/latest/tutorials
 
+CoachApp is a **single-app**, feature-folder solution. Add a feature as a **vertical slice**,
+bottom-up, mirroring the reference `Trainee` / `TrainingPlan` slices. Namespaces are
+feature-based (`CoachApp.Entites.<Feature>`, `CoachApp.Apis.<Feature>`, `CoachApp.Enums`,
+`CoachApp.Permissions`, `CoachApp.EntityConfigurations.<Feature>`). `<Feature>` is the
+pluralized entity.
+
 ## Adding a New Entity (Full Flow)
 
-### 1. Domain Layer
-Create entity (location varies by template: `*.Domain/Entities/` for layered, `Entities/` for single-layer/microservice):
-
+### 1. Domain.Shared — consts, enum, error codes
 ```csharp
-public class Book : AggregateRoot<Guid>
+// Entites/Trainees/TraineeConsts.cs  (namespace CoachApp.Entites.Trainees)
+// Single source of length truth — reused by entity, DTO and EF config.
+public static class TraineeConsts
 {
-    public string Name { get; private set; }
-    public decimal Price { get; private set; }
-    public Guid AuthorId { get; private set; }
-
-    protected Book() { }
-
-    public Book(Guid id, string name, decimal price, Guid authorId) : base(id)
-    {
-        Name = Check.NotNullOrWhiteSpace(name, nameof(name));
-        SetPrice(price);
-        AuthorId = authorId;
-    }
-
-    public void SetPrice(decimal price)
-    {
-        Price = Check.Range(price, nameof(price), 0, 9999);
-    }
-}
-```
-
-### 2. Domain.Shared
-Add constants and enums in `*.Domain.Shared/`:
-
-```csharp
-public static class BookConsts
-{
-    public const int MaxNameLength = 128;
+    public const int MaxCodeLength = 32;
+    public const int MaxFirstNameLength = 64;
+    public const int MaxLastNameLength = 64;
 }
 
-public enum BookType
-{
-    Novel,
-    Science,
-    Biography
-}
+// Enums/Gender.cs  (namespace CoachApp.Enums) — byte-backed, explicit values
+public enum Gender : byte { Unspecified = 0, Male = 1, Female = 2 }
+
+// CoachAppDomainErrorCodes.cs — one code per business rule (mapped to a localization key)
+public const string TraineeCodeAlreadyExists = "CoachApp:00001";
 ```
 
-### 3. Repository Interface (Optional)
-Define custom repository in `*.Domain/` only if you need custom query methods. For simple CRUD, use generic `IRepository<Book, Guid>` directly:
+### 2. Domain — entity with `static Create`
+Pragmatic domain model: `FullAuditedAggregateRoot<Guid>` (`+ IMultiTenant` when tenant-scoped),
+**public settable properties** for plain fields, a `protected` ctor for the ORM, and a
+`static Create(...)` factory that validates required fields/lengths. Guard a real invariant (one
+that needs no I/O) with a behavior method that throws and keep its fields `protected set`.
 
 ```csharp
-// Only if custom queries are needed
-public interface IBookRepository : IRepository<Book, Guid>
+// Entites/Trainees/Trainee.cs  (namespace CoachApp.Entites.Trainees)
+public class Trainee : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
-    Task<Book> FindByNameAsync(string name);
-}
-```
+    public virtual Guid? TenantId { get; set; }
+    public virtual string Code { get; set; } = string.Empty;
+    public virtual string FirstName { get; set; } = string.Empty;
+    public virtual Gender Gender { get; set; }
+    public virtual bool IsActive { get; set; }
 
-### 4. EF Core Configuration
-In `*.EntityFrameworkCore/`:
+    protected Trainee() { } // For ORM
 
-**DbContext:**
-```csharp
-public DbSet<Book> Books { get; set; }
-```
-
-**OnModelCreating:**
-```csharp
-builder.Entity<Book>(b =>
-{
-    b.ToTable(MyProjectConsts.DbTablePrefix + "Books", MyProjectConsts.DbSchema);
-    b.ConfigureByConvention();
-    b.Property(x => x.Name).IsRequired().HasMaxLength(BookConsts.MaxNameLength);
-    b.HasIndex(x => x.Name);
-});
-```
-
-**Repository Implementation (only if custom interface defined):**
-```csharp
-public class BookRepository : EfCoreRepository<MyDbContext, Book, Guid>, IBookRepository
-{
-    public BookRepository(IDbContextProvider<MyDbContext> dbContextProvider)
-        : base(dbContextProvider)
+    public static Trainee Create(Guid id, string code, string firstName,
+        Gender gender = Gender.Unspecified, Guid? tenantId = null)
     {
-    }
-
-    public async Task<Book> FindByNameAsync(string name)
-    {
-        return await (await GetDbSetAsync())
-            .FirstOrDefaultAsync(b => b.Name == name);
+        return new Trainee
+        {
+            Id = id,
+            Code = Check.NotNullOrWhiteSpace(code, nameof(code), TraineeConsts.MaxCodeLength),
+            FirstName = Check.NotNullOrWhiteSpace(firstName, nameof(firstName), TraineeConsts.MaxFirstNameLength),
+            Gender = gender,
+            TenantId = tenantId,
+            IsActive = true
+        };
     }
 }
 ```
+> **Do NOT** add a separate `*Factory` class, and **do NOT** add a `*Manager` for simple CRUD.
+> Add a `*Manager : DomainService` only for a genuine cross-aggregate domain rule.
 
-### 5. Run Migration
-```bash
-cd src/MyProject.EntityFrameworkCore
-
-# Add migration
-dotnet ef migrations add Added_Book
-
-# Apply migration (choose one):
-dotnet run --project ../MyProject.DbMigrator   # Recommended - also seeds data
-# OR
-dotnet ef database update  # EF Core command only
-```
-
-### 6. Application.Contracts
-Create DTOs and service interface:
-
+### 3. Application.Contracts — DTOs + service interface
 ```csharp
-// DTOs
-public class BookDto : EntityDto<Guid>
+// Entites/Trainees/TraineeDto.cs
+public class TraineeDto : FullAuditedEntityDto<Guid>
 {
-    public string Name { get; set; }
-    public decimal Price { get; set; }
-    public Guid AuthorId { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string FirstName { get; set; } = string.Empty;
+    public Gender Gender { get; set; }
+    public bool IsActive { get; set; }
 }
 
-public class CreateBookDto
+// Entites/Trainees/CreateUpdateTraineeDto.cs — DataAnnotations validation (lengths from Consts)
+public class CreateUpdateTraineeDto
 {
-    [Required]
-    [StringLength(BookConsts.MaxNameLength)]
-    public string Name { get; set; }
-    
-    [Range(0, 9999)]
-    public decimal Price { get; set; }
+    [Required, StringLength(TraineeConsts.MaxCodeLength)]
+    public string Code { get; set; } = string.Empty;
 
-    [Required]
-    public Guid AuthorId { get; set; }
+    [Required, StringLength(TraineeConsts.MaxFirstNameLength)]
+    public string FirstName { get; set; } = string.Empty;
+
+    public Gender Gender { get; set; } = Gender.Unspecified;
+    public bool IsActive { get; set; } = true;
 }
 
-// Service Interface
-public interface IBookAppService : IApplicationService
+// Entites/Trainees/GetTraineeListInput.cs
+public class GetTraineeListInput : PagedAndSortedResultRequestDto
 {
-    Task<BookDto> GetAsync(Guid id);
-    Task<PagedResultDto<BookDto>> GetListAsync(PagedAndSortedResultRequestDto input);
-    Task<BookDto> CreateAsync(CreateBookDto input);
+    public string? Filter { get; set; }
+    public bool? IsActive { get; set; }
+}
+
+// Entites/Trainees/ITraineeAppService.cs — Id passed separately from the update DTO
+public interface ITraineeAppService : IApplicationService
+{
+    Task<TraineeDto> GetAsync(Guid id);
+    Task<PagedResultDto<TraineeDto>> GetListAsync(GetTraineeListInput input);
+    Task<TraineeDto> CreateAsync(CreateUpdateTraineeDto input);
+    Task<TraineeDto> UpdateAsync(Guid id, CreateUpdateTraineeDto input);
+    Task DeleteAsync(Guid id);
 }
 ```
 
-### 7. Object Mapping (Mapperly / AutoMapper)
-ABP supports both Mapperly and AutoMapper. Prefer the provider already used in the solution.
-
-If the solution uses **Mapperly**, create a mapper in the Application project:
-
+### 4. Application.Contracts — permissions
 ```csharp
-[Mapper]
-public partial class BookMapper
+// Permissions/CoachAppPermissions.cs
+public static class Trainees
 {
-    public partial BookDto MapToDto(Book book);
-    public partial List<BookDto> MapToDtoList(List<Book> books);
+    public const string Default = GroupName + ".Trainees";
+    public const string Create = Default + ".Create";
+    public const string Update = Default + ".Update";
+    public const string Delete = Default + ".Delete";
 }
+// Register the children in CoachAppPermissionDefinitionProvider.Define(...).
 ```
 
-Register in module:
-```csharp
-context.Services.AddSingleton<BookMapper>();
-```
-
-### 8. Application Service
-Implement service (using generic repository - use `IBookRepository` if you defined custom interface in step 3):
+### 5. Application — fat AppService + Mapster line
+Inject the **generic `IRepository<T, Guid>`** and do querying inline; run cross-aggregate checks
+here. Map out with `ObjectMapper` (Mapster).
 
 ```csharp
-public class BookAppService : ApplicationService, IBookAppService
+// Apis/Trainees/TraineeAppService.cs  (namespace CoachApp.Apis.Trainees)
+[Authorize(CoachAppPermissions.Trainees.Default)]
+public class TraineeAppService : CoachAppAppService, ITraineeAppService
 {
-    private readonly IRepository<Book, Guid> _bookRepository; // Or IBookRepository
-    private readonly BookMapper _bookMapper;
+    private readonly IRepository<Trainee, Guid> _traineeRepository;
 
-    public BookAppService(
-        IRepository<Book, Guid> bookRepository,
-        BookMapper bookMapper)
+    public TraineeAppService(IRepository<Trainee, Guid> traineeRepository)
+        => _traineeRepository = traineeRepository;
+
+    public virtual async Task<PagedResultDto<TraineeDto>> GetListAsync(GetTraineeListInput input)
     {
-        _bookRepository = bookRepository;
-        _bookMapper = bookMapper;
+        var query = await _traineeRepository.GetQueryableAsync();
+        query = query
+            .WhereIf(!string.IsNullOrWhiteSpace(input.Filter), x => x.Code.Contains(input.Filter!))
+            .WhereIf(input.IsActive.HasValue, x => x.IsActive == input.IsActive!.Value);
+
+        var totalCount = await AsyncExecuter.CountAsync(query);
+        var sorting = string.IsNullOrWhiteSpace(input.Sorting) ? $"{nameof(Trainee.Code)} asc" : input.Sorting;
+        var trainees = await AsyncExecuter.ToListAsync(
+            query.OrderBy(sorting).Skip(input.SkipCount).Take(input.MaxResultCount)); // System.Linq.Dynamic.Core
+
+        return new PagedResultDto<TraineeDto>(
+            totalCount, ObjectMapper.Map<List<Trainee>, List<TraineeDto>>(trainees));
     }
 
-    public async Task<BookDto> GetAsync(Guid id)
+    [Authorize(CoachAppPermissions.Trainees.Create)]
+    public virtual async Task<TraineeDto> CreateAsync(CreateUpdateTraineeDto input)
     {
-        var book = await _bookRepository.GetAsync(id);
-        return _bookMapper.MapToDto(book);
-    }
-
-    [Authorize(MyProjectPermissions.Books.Create)]
-    public async Task<BookDto> CreateAsync(CreateBookDto input)
-    {
-        var book = new Book(
-            GuidGenerator.Create(),
-            input.Name,
-            input.Price,
-            input.AuthorId
-        );
-        
-        await _bookRepository.InsertAsync(book);
-        return _bookMapper.MapToDto(book);
+        await CheckCodeDuplicationAsync(input.Code); // cross-aggregate uniqueness — needs the repo
+        var trainee = Trainee.Create(GuidGenerator.Create(), input.Code, input.FirstName, input.Gender, CurrentTenant.Id);
+        await _traineeRepository.InsertAsync(trainee, autoSave: true);
+        return ObjectMapper.Map<Trainee, TraineeDto>(trainee);
     }
 }
 ```
 
-### 9. Add Localization
-In `*.Domain.Shared/Localization/*/en.json`:
+**Mapster mapping** — add one line to `CoachAppMapsterConfig.Configure()` (entity → DTO only):
+```csharp
+TypeAdapterConfig<Trainee, TraineeDto>.NewConfig();
+```
+Do NOT use Mapperly (`[Mapper]`/`MapperBase`) or AutoMapper (`CreateMap`/`Profile`). Use
+`.Ignore(...)` / `.Map(dest => ..., src => ...)` for properties the service fills or shape
+mismatches. Mapping always goes through `ObjectMapper.Map<...>()`.
 
+### 6. EntityFrameworkCore — EF configuration + DbSet
+```csharp
+// EntityConfigurations/Trainees/TraineeConfiguration.cs  (namespace CoachApp.EntityConfigurations.Trainees)
+public class TraineeConfiguration : IEntityTypeConfiguration<Trainee>
+{
+    public void Configure(EntityTypeBuilder<Trainee> b)
+    {
+        b.ToTable(CoachAppConsts.DbTablePrefix + "Trainees", CoachAppConsts.DbSchema);
+        b.ConfigureByConvention();
+        b.Property(x => x.Code).IsRequired().HasMaxLength(TraineeConsts.MaxCodeLength);
+        b.Property(x => x.FirstName).IsRequired().HasMaxLength(TraineeConsts.MaxFirstNameLength);
+        b.Property(x => x.Gender).HasConversion<byte>();
+        b.HasIndex(x => new { x.TenantId, x.Code });
+    }
+}
+// Auto-applied by builder.ApplyConfigurationsFromAssembly(...) in CoachAppDbContext.
+
+// CoachAppDbContext.cs — add one DbSet per aggregate on the single DbContext
+public DbSet<Trainee> Trainees { get; set; }
+```
+> There is **no per-module DbContext** and no hand-called configuration extension — just add the
+> `IEntityTypeConfiguration<T>` class and the `DbSet<T>`.
+
+### 7. Localization
+Add keys to **both** `Domain.Shared/Localization/CoachApp/en.json` and `ar.json`:
 ```json
 {
-  "Book": "Book",
-  "Books": "Books",
-  "BookName": "Name",
-  "BookPrice": "Price"
+  "Permission:Trainees": "Trainees",
+  "Permission:Trainees.Create": "Create trainee",
+  "CoachApp:00001": "A trainee with code {Code} already exists.",
+  "Code": "Code",
+  "FirstName": "First name"
 }
 ```
 
-### 10. Add Permissions (if needed)
-```csharp
-public static class MyProjectPermissions
-{
-    public static class Books
-    {
-        public const string Default = "MyProject.Books";
-        public const string Create = Default + ".Create";
-    }
-}
+### 8. Migration (write freely — ASK before applying)
+```bash
+dotnet ef migrations add Added_Trainee \
+  --project src/CoachApp.EntityFrameworkCore \
+  --startup-project src/CoachApp.EntityFrameworkCore
+
+# Apply ONLY with the user's approval (also seeds admin/permissions):
+dotnet run --project src/CoachApp.DbMigrator
+# or EF-only:  dotnet ef database update
 ```
+Review the generated migration before it is applied (watch for accidental table renames if a
+namespace moved). **Writing the migration file is fine; applying it to the database needs the
+user's OK.**
 
-### 11. Add Tests
+### 9. Tests (when asked)
+Mirror `test/CoachApp.Application.Tests`; cover the happy path + each `BusinessException` +
+authorization.
 ```csharp
-public class BookAppService_Tests : MyProjectApplicationTestBase
+public class TraineeAppService_Tests : CoachAppApplicationTestBase
 {
-    private readonly IBookAppService _bookAppService;
+    private readonly ITraineeAppService _traineeAppService;
 
-    public BookAppService_Tests()
-    {
-        _bookAppService = GetRequiredService<IBookAppService>();
-    }
+    public TraineeAppService_Tests()
+        => _traineeAppService = GetRequiredService<ITraineeAppService>();
 
     [Fact]
-    public async Task Should_Create_Book()
+    public async Task Should_Create_Trainee()
     {
-        var result = await _bookAppService.CreateAsync(new CreateBookDto
+        var result = await _traineeAppService.CreateAsync(new CreateUpdateTraineeDto
         {
-            Name = "Test Book",
-            Price = 19.99m
+            Code = "T-001",
+            FirstName = "Alex"
         });
 
         result.Id.ShouldNotBe(Guid.Empty);
-        result.Name.ShouldBe("Test Book");
+        result.Code.ShouldBe("T-001");
     }
 }
 ```
+
+## Modifying an existing entity
+Touch the SAME files in sync: `Consts` → entity prop / behavior / invariant → DTO(s) + annotations
+→ `CoachAppMapsterConfig` (only if a new mapping is needed) → `EntityConfigurations/<Feature>`
+block → `DbSet` (only for a brand-new entity) → localization → migration. Never change an entity
+property without also updating the DTO, EF config and `Consts`.
 
 ## Quick Reference Commands
 
 ### Build Solution
 ```bash
-dotnet build
+dotnet build CoachApp.slnx
 ```
 
 ### Run Migrations
 ```bash
-cd src/MyProject.EntityFrameworkCore
-dotnet ef migrations add MigrationName
-dotnet run --project ../MyProject.DbMigrator  # Apply migration + seed data
+dotnet ef migrations add MigrationName \
+  --project src/CoachApp.EntityFrameworkCore --startup-project src/CoachApp.EntityFrameworkCore
+dotnet run --project src/CoachApp.DbMigrator   # apply migration + seed data (ASK FIRST)
 ```
 
-### Generate Angular Proxies
+### Run / smoke-test
 ```bash
-abp generate-proxy -t ng
+dotnet run --project src/CoachApp.HttpApi.Host   # Swagger to try endpoints
 ```
 
 ## Checklist for New Features
 
-- [ ] Entity created with proper constructors
-- [ ] Constants in Domain.Shared
-- [ ] Custom repository interface in Domain (only if custom queries needed)
-- [ ] EF Core configuration added
-- [ ] Custom repository implementation (only if interface defined)
-- [ ] Migration generated and applied (use DbMigrator)
-- [ ] Mapperly mapper created and registered
-- [ ] DTOs created in Application.Contracts
-- [ ] Service interface defined
-- [ ] Service implementation with authorization
-- [ ] Localization keys added
-- [ ] Permissions defined (if applicable)
-- [ ] Tests written
+- [ ] Consts + enum + error code in Domain.Shared
+- [ ] Entity in Domain with `static Create` (public setters; invariant behavior methods; no Factory/Manager)
+- [ ] DTOs (`TraineeDto`, `CreateUpdateTraineeDto`, `GetTraineeListInput`) + `I<Entity>AppService` in Application.Contracts
+- [ ] Permissions defined + registered in the provider
+- [ ] Fat AppService in Application (generic repo, inline querying, cross-aggregate checks, `[Authorize]`)
+- [ ] Mapster line added to `CoachAppMapsterConfig` (entity → DTO)
+- [ ] `IEntityTypeConfiguration<T>` + `DbSet<T>` on the single `CoachAppDbContext`
+- [ ] Localization keys added (en + ar)
+- [ ] Migration generated (applied only with approval)
+- [ ] Tests written (when asked)

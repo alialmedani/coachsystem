@@ -12,21 +12,36 @@ alwaysApply: true
 
 > **Docs**: https://abp.io/docs/latest/solution-templates/layered-web-application
 
-This template follows **Domain-Driven Design (DDD)** principles with strict layer separation.
+CoachApp is a **single-application** ABP 10.4.0 / .NET 10 solution. It keeps the classic
+DDD **layer projects** but organizes each layer by **feature folder**. There is **no
+`modules/` folder** — everything lives under `src/`. The `Trainee` / `TrainingPlan` slices
+are the reference; mirror them file-for-file.
 
 ## Solution Structure
 
 ```
-MyProject/
+CoachApp/
 ├── src/
-│   ├── CoachApp.Domain.Shared/        # Constants, enums, localization, ETOs
-│   ├── CoachApp.Domain/               # Entities, repository interfaces, domain services
-│   ├── CoachApp.Application.Contracts/ # DTOs, service interfaces
-│   ├── CoachApp.Application/          # Application service implementations
-│   ├── CoachApp.EntityFrameworkCore/  # EF Core DbContext, repository implementations
-│   ├── CoachApp.HttpApi/              # REST API controllers (optional)
-│   ├── CoachApp.HttpApi.Client/       # Client proxies for remote calls
-│   └── CoachApp.DbMigrator/           # Database migration console app
+│   ├── CoachApp.Domain.Shared/            # Consts, enums, error codes, localization
+│   │   ├── Entites/<Feature>/             #   <Entity>Consts.cs
+│   │   ├── Enums/                         #   <Enum>.cs  (namespace CoachApp.Enums)
+│   │   ├── Localization/CoachApp/         #   en.json, ar.json
+│   │   └── CoachAppDomainErrorCodes.cs
+│   ├── CoachApp.Domain/                   # Entities / aggregate roots
+│   │   └── Entites/<Feature>/             #   <Entity>.cs  (+ <Entity>Manager only if truly needed)
+│   ├── CoachApp.Application.Contracts/    # DTOs, service interfaces, permissions
+│   │   ├── Entites/<Feature>/             #   <Entity>Dto, CreateUpdate<Entity>Dto, Get<Entity>ListInput, I<Entity>AppService
+│   │   └── Permissions/                   #   CoachAppPermissions, CoachAppPermissionDefinitionProvider
+│   ├── CoachApp.Application/              # Application service implementations
+│   │   ├── Apis/<Feature>/               #   <Entity>AppService.cs
+│   │   ├── CoachAppMapsterConfig.cs      #   central Mapster mapping config
+│   │   └── MapsterObjectMapper.cs
+│   ├── CoachApp.EntityFrameworkCore/     # Single DbContext + per-feature EF config + migrations
+│   │   ├── EntityFrameworkCore/          #   CoachAppDbContext.cs
+│   │   ├── EntityConfigurations/<Feature>/  # <Entity>Configuration : IEntityTypeConfiguration<T>
+│   │   └── Migrations/
+│   ├── CoachApp.HttpApi.Host/            # Host: conventional (auto) controllers, Swagger
+│   └── CoachApp.DbMigrator/              # Applies migrations + seeds data
 └── test/
     ├── CoachApp.Domain.Tests/
     ├── CoachApp.Application.Tests/
@@ -37,166 +52,226 @@ MyProject/
 
 | Layer | Responsibility | References |
 |-------|---------------|------------|
-| **Domain.Shared** | Constants, enums, localization keys, ETOs | Nothing |
-| **Domain** | Entities, aggregate roots, domain services, repository interfaces | Domain.Shared |
-| **Application.Contracts** | DTOs, service interfaces | Domain.Shared |
-| **Application** | Use case orchestration, mapping | Domain, Application.Contracts |
-| **EntityFrameworkCore** | DbContext, repository implementations, migrations | Domain |
-| **HttpApi** | REST controllers (if not using Auto API) | Application.Contracts |
+| **Domain.Shared** | Consts, enums, error codes, localization keys | Nothing |
+| **Domain** | Entities / aggregate roots; `*Manager` only for a genuine cross-aggregate rule | Domain.Shared |
+| **Application.Contracts** | DTOs, `I<Entity>AppService`, permissions | Domain.Shared |
+| **Application** | AppService orchestration + querying, Mapster config | Domain, Application.Contracts |
+| **EntityFrameworkCore** | Single `CoachAppDbContext`, `IEntityTypeConfiguration<T>`, migrations | Domain |
+| **HttpApi.Host** | Conventional controllers (auto-exposed app services), host wiring | Application.Contracts |
 | **DbMigrator** | Database migration + seeding console app | EntityFrameworkCore |
 
-## Key Differences from Other Templates
+## Feature-based namespaces (layer name dropped)
 
-| Layered (This) | Single-Layer | Microservice |
-|---------------|--------------|--------------|
-| Strict DDD layers | Single project | Single project per service |
-| DTOs in Application.Contracts | DTOs in Services folder | DTOs in Contracts project |
-| Custom repository interfaces in Domain | Generic repositories only | Generic repositories only |
-| Multiple module classes | Single module class | Single module class per service |
-| DbMigrator project | Migration in host | Migration per service |
+| Concern | Project → folder | Namespace |
+|---|---|---|
+| Entity (+ optional Manager) | `Domain` → `Entites/<Feature>/` | `CoachApp.Entites.<Feature>` |
+| Consts | `Domain.Shared` → `Entites/<Feature>/` | `CoachApp.Entites.<Feature>` |
+| Enums | `Domain.Shared` → `Enums/` | `CoachApp.Enums` |
+| Error codes | `Domain.Shared` (root) | `CoachApp` |
+| DTOs + `I<Entity>AppService` | `Application.Contracts` → `Entites/<Feature>/` | `CoachApp.Entites.<Feature>` |
+| Permissions | `Application.Contracts` → `Permissions/` | `CoachApp.Permissions` |
+| AppService | `Application` → `Apis/<Feature>/` | `CoachApp.Apis.<Feature>` |
+| Mapster config | `Application` (root) | `CoachApp` |
+| EF configuration | `EntityFrameworkCore` → `EntityConfigurations/<Feature>/` | `CoachApp.EntityConfigurations.<Feature>` |
+
+`<Feature>` is the pluralized entity (`Trainees`, `TrainingPlans`).
 
 ## Adding a New Feature
 
-### 1. Entity in Domain
+### 1. Constants + enum in Domain.Shared
 ```csharp
-public class Book : AuditedAggregateRoot<Guid>
+// Entites/Trainees/TraineeConsts.cs  (namespace CoachApp.Entites.Trainees)
+public static class TraineeConsts
 {
-    public string Name { get; private set; }
-    public decimal Price { get; private set; }
-
-    protected Book() { } // For ORM
-
-    public Book(Guid id, string name, decimal price) : base(id)
-    {
-        SetName(name);
-        SetPrice(price);
-    }
-
-    public void SetName(string name)
-    {
-        Name = Check.NotNullOrWhiteSpace(name, nameof(name), maxLength: BookConsts.MaxNameLength);
-    }
-
-    public void SetPrice(decimal price)
-    {
-        Price = Check.Range(price, nameof(price), 0, 9999);
-    }
+    public const int MaxCodeLength = 32;
+    public const int MaxFirstNameLength = 64;
+    public const int MaxLastNameLength = 64;
 }
+
+// Enums/Gender.cs  (namespace CoachApp.Enums) — byte-backed, explicit values
+public enum Gender : byte { Unspecified = 0, Male = 1, Female = 2 }
+
+// CoachAppDomainErrorCodes.cs — one code per business rule
+public const string TraineeCodeAlreadyExists = "CoachApp:00001";
 ```
 
-### 2. Constants in Domain.Shared
+### 2. Entity in Domain (pragmatic — public setters + static Create)
 ```csharp
-public static class BookConsts
+// Entites/Trainees/Trainee.cs  (namespace CoachApp.Entites.Trainees)
+public class Trainee : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
-    public const int MaxNameLength = 128;
-}
-```
+    public virtual Guid? TenantId { get; set; }
+    public virtual string Code { get; set; } = string.Empty;
+    public virtual string FirstName { get; set; } = string.Empty;
+    public virtual bool IsActive { get; set; }
 
-### 3. Repository Interface in Domain (if custom queries needed)
-```csharp
-public interface IBookRepository : IRepository<Book, Guid>
-{
-    Task<Book> FindByNameAsync(string name);
-}
-```
+    protected Trainee() { } // For ORM
 
-### 4. DTOs in Application.Contracts
-```csharp
-public class BookDto : EntityDto<Guid>
-{
-    public string Name { get; set; }
-    public decimal Price { get; set; }
-}
-
-public class CreateBookDto
-{
-    [Required]
-    [StringLength(BookConsts.MaxNameLength)]
-    public string Name { get; set; }
-
-    [Range(0, 9999)]
-    public decimal Price { get; set; }
-}
-```
-
-### 5. Service Interface in Application.Contracts
-```csharp
-public interface IBookAppService : IApplicationService
-{
-    Task<BookDto> GetAsync(Guid id);
-    Task<PagedResultDto<BookDto>> GetListAsync(PagedAndSortedResultRequestDto input);
-    Task<BookDto> CreateAsync(CreateBookDto input);
-}
-```
-
-### 6. Service Implementation in Application
-```csharp
-public class BookAppService : ApplicationService, IBookAppService
-{
-    private readonly IRepository<Book, Guid> _bookRepository;
-    private readonly BookMapper _bookMapper;
-
-    public BookAppService(IRepository<Book, Guid> bookRepository, BookMapper bookMapper)
+    public static Trainee Create(Guid id, string code, string firstName, Guid? tenantId = null)
     {
-        _bookRepository = bookRepository;
-        _bookMapper = bookMapper;
-    }
-
-    public async Task<BookDto> GetAsync(Guid id)
-    {
-        var book = await _bookRepository.GetAsync(id);
-        return _bookMapper.MapToDto(book);
-    }
-
-    [Authorize(MyProjectPermissions.Books.Create)]
-    public async Task<BookDto> CreateAsync(CreateBookDto input)
-    {
-        var book = new Book(GuidGenerator.Create(), input.Name, input.Price);
-        await _bookRepository.InsertAsync(book);
-        return _bookMapper.MapToDto(book);
+        return new Trainee
+        {
+            Id = id,
+            Code = Check.NotNullOrWhiteSpace(code, nameof(code), TraineeConsts.MaxCodeLength),
+            FirstName = Check.NotNullOrWhiteSpace(firstName, nameof(firstName), TraineeConsts.MaxFirstNameLength),
+            TenantId = tenantId,
+            IsActive = true
+        };
     }
 }
 ```
+Guard a **real invariant** (one that needs no I/O) with a behavior method that throws and keep
+its fields `protected set` — e.g. `TrainingPlan.SetSchedule(start, end)` enforcing `end > start`.
+Do **not** add a `*Factory`; add a `*Manager` only for a genuine cross-aggregate rule.
 
-### 7. DbContext Configuration in EntityFrameworkCore
+### 3. DTOs + service interface in Application.Contracts
 ```csharp
-public DbSet<Book> Books { get; set; }
-
-// In OnModelCreating
-builder.Entity<Book>(b =>
+// Entites/Trainees/TraineeDto.cs
+public class TraineeDto : FullAuditedEntityDto<Guid>
 {
-    b.ToTable(MyProjectConsts.DbTablePrefix + "Books", MyProjectConsts.DbSchema);
-    b.ConfigureByConvention();
-    b.Property(x => x.Name).IsRequired().HasMaxLength(BookConsts.MaxNameLength);
-});
+    public string Code { get; set; } = string.Empty;
+    public string FirstName { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+}
+
+// Entites/Trainees/CreateUpdateTraineeDto.cs — DataAnnotations validation
+public class CreateUpdateTraineeDto
+{
+    [Required, StringLength(TraineeConsts.MaxCodeLength)]
+    public string Code { get; set; } = string.Empty;
+
+    [Required, StringLength(TraineeConsts.MaxFirstNameLength)]
+    public string FirstName { get; set; } = string.Empty;
+
+    public bool IsActive { get; set; } = true;
+}
+
+// Entites/Trainees/GetTraineeListInput.cs
+public class GetTraineeListInput : PagedAndSortedResultRequestDto
+{
+    public string? Filter { get; set; }
+    public bool? IsActive { get; set; }
+}
+
+// Entites/Trainees/ITraineeAppService.cs — Id passed separately from the update DTO
+public interface ITraineeAppService : IApplicationService
+{
+    Task<TraineeDto> GetAsync(Guid id);
+    Task<PagedResultDto<TraineeDto>> GetListAsync(GetTraineeListInput input);
+    Task<TraineeDto> CreateAsync(CreateUpdateTraineeDto input);
+    Task<TraineeDto> UpdateAsync(Guid id, CreateUpdateTraineeDto input);
+    Task DeleteAsync(Guid id);
+}
 ```
 
-### 8. Run DbMigrator
+### 4. Permissions in Application.Contracts
+```csharp
+// Permissions/CoachAppPermissions.cs
+public static class CoachAppPermissions
+{
+    public const string GroupName = "CoachApp";
+
+    public static class Trainees
+    {
+        public const string Default = GroupName + ".Trainees";
+        public const string Create = Default + ".Create";
+        public const string Update = Default + ".Update";
+        public const string Delete = Default + ".Delete";
+    }
+}
+// Register the children in CoachAppPermissionDefinitionProvider.Define(...).
+```
+
+### 5. Fat AppService in Application (generic repository, inline querying)
+```csharp
+// Apis/Trainees/TraineeAppService.cs  (namespace CoachApp.Apis.Trainees)
+[Authorize(CoachAppPermissions.Trainees.Default)]
+public class TraineeAppService : CoachAppAppService, ITraineeAppService
+{
+    private readonly IRepository<Trainee, Guid> _traineeRepository;
+
+    public TraineeAppService(IRepository<Trainee, Guid> traineeRepository)
+        => _traineeRepository = traineeRepository;
+
+    public virtual async Task<PagedResultDto<TraineeDto>> GetListAsync(GetTraineeListInput input)
+    {
+        var query = await _traineeRepository.GetQueryableAsync();
+        query = query
+            .WhereIf(!string.IsNullOrWhiteSpace(input.Filter), x => x.Code.Contains(input.Filter!))
+            .WhereIf(input.IsActive.HasValue, x => x.IsActive == input.IsActive!.Value);
+
+        var totalCount = await AsyncExecuter.CountAsync(query);
+        var sorting = string.IsNullOrWhiteSpace(input.Sorting) ? $"{nameof(Trainee.Code)} asc" : input.Sorting;
+        var trainees = await AsyncExecuter.ToListAsync(
+            query.OrderBy(sorting).Skip(input.SkipCount).Take(input.MaxResultCount));
+
+        return new PagedResultDto<TraineeDto>(
+            totalCount, ObjectMapper.Map<List<Trainee>, List<TraineeDto>>(trainees));
+    }
+
+    [Authorize(CoachAppPermissions.Trainees.Create)]
+    public virtual async Task<TraineeDto> CreateAsync(CreateUpdateTraineeDto input)
+    {
+        await CheckCodeDuplicationAsync(input.Code); // cross-aggregate rule that needs the repo
+        var trainee = Trainee.Create(GuidGenerator.Create(), input.Code, input.FirstName, CurrentTenant.Id);
+        await _traineeRepository.InsertAsync(trainee, autoSave: true);
+        return ObjectMapper.Map<Trainee, TraineeDto>(trainee);
+    }
+}
+```
+
+### 6. Mapster mapping line in Application
+```csharp
+// CoachAppMapsterConfig.Configure() — entity → DTO only, grouped by feature
+TypeAdapterConfig<Trainee, TraineeDto>.NewConfig();
+```
+
+### 7. EF configuration + DbSet in EntityFrameworkCore
+```csharp
+// EntityConfigurations/Trainees/TraineeConfiguration.cs
+public class TraineeConfiguration : IEntityTypeConfiguration<Trainee>
+{
+    public void Configure(EntityTypeBuilder<Trainee> b)
+    {
+        b.ToTable(CoachAppConsts.DbTablePrefix + "Trainees", CoachAppConsts.DbSchema);
+        b.ConfigureByConvention();
+        b.Property(x => x.Code).IsRequired().HasMaxLength(TraineeConsts.MaxCodeLength);
+        b.Property(x => x.Gender).HasConversion<byte>();
+        b.HasIndex(x => new { x.TenantId, x.Code });
+    }
+}
+// Auto-applied by builder.ApplyConfigurationsFromAssembly(...) — you just add the class.
+
+// CoachAppDbContext.cs — one DbSet per aggregate on the single DbContext
+public DbSet<Trainee> Trainees { get; set; }
+```
+
+### 8. Localization
+Add keys to **both** `Domain.Shared/Localization/CoachApp/en.json` and `ar.json`
+(`Permission:Trainees` + `.Create/.Update/.Delete`, the `CoachApp:0000N` message, field labels).
+
+### 9. Migration (write freely — ASK before applying)
 ```bash
-cd src/CoachApp.EntityFrameworkCore
-dotnet ef migrations add Added_Book
+dotnet ef migrations add Added_Trainee \
+  --project src/CoachApp.EntityFrameworkCore \
+  --startup-project src/CoachApp.EntityFrameworkCore
 
-cd ../CoachApp.DbMigrator
-dotnet run
+# Apply ONLY with the user's approval (also seeds):
+dotnet run --project src/CoachApp.DbMigrator
 ```
 
 ## DbMigrator
 
-Console application for:
-- Applying database migrations
-- Seeding initial data (admin user, permissions, etc.)
-
-Run before first launch:
-```bash
-dotnet run --project src/CoachApp.DbMigrator
-```
+Console application for applying database migrations and seeding initial data (admin user,
+permissions, etc.). Run it (with approval) before first launch.
 
 ## Best Practices
 
-1. **Respect layer boundaries** - Never referenceEntityFrameworkCorefrom Application
-2. **Rich domain model** - Encapsulate business logic in entities
-3. **Repository per aggregate** - One repository per aggregate root only
-4. **DTOs at boundaries** - Never expose entities outside Application layer
-5. **Use DbMigrator** - For consistent database setup across environments
-6. **Auto API Controllers** - Let ABP generate controllers from app services
-7. **Mapperly for mapping** - Use compile-time mapper for performance
+1. **Respect layer boundaries** — never reference EntityFrameworkCore from Application.
+2. **Pragmatic domain** — public setters + `static Create`; invariants as behavior methods; no default Factory/Manager.
+3. **Generic repository for CRUD** — `IRepository<T, Guid>`; custom repo only for a complex, reused query.
+4. **Fat AppService** — orchestration + inline querying + cross-aggregate checks live here.
+5. **DTOs at boundaries** — never expose entities; map entity → DTO via `ObjectMapper` (Mapster).
+6. **Conventional controllers** — ABP auto-exposes app services; don't hand-write controllers.
+7. **Mapster for mapping** — central `CoachAppMapsterConfig`, not Mapperly/AutoMapper.
+8. **Migrations are the schema** — write them freely, but ASK before applying.

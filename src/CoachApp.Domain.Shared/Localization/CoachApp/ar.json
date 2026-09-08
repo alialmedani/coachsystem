@@ -37,6 +37,54 @@
     "Unspecified": "نظام",
     "SeeAllUsers": "رؤية كافة المستخدمين",
     "TakePhoto": "تصوير",
-    "ChoosePhoto": "اختر صورة"
+    "ChoosePhoto": "اختر صورة",
+
+    "Menu:Training": "التدريب",
+    "Menu:Trainees": "المتدربون",
+    "Trainees": "المتدربون",
+    "Trainee": "متدرب",
+    "NewTrainee": "متدرب جديد",
+    "EditTrainee": "تعديل المتدرب",
+
+    "Menu:TrainingPlans": "الخطط التدريبية",
+    "TrainingPlans": "الخطط التدريبية",
+    "TrainingPlan": "خطة تدريبية",
+    "NewTrainingPlan": "خطة تدريبية جديدة",
+    "EditTrainingPlan": "تعديل الخطة التدريبية",
+
+    "DisplayName:Code": "الرمز",
+    "DisplayName:FirstName": "الاسم الأول",
+    "DisplayName:LastName": "الاسم الأخير",
+    "DisplayName:Gender": "الجنس",
+    "DisplayName:BirthDate": "تاريخ الميلاد",
+    "DisplayName:Email": "البريد الإلكتروني",
+    "DisplayName:PhoneNumber": "رقم الهاتف",
+    "DisplayName:Address": "العنوان",
+    "DisplayName:IsActive": "نشط",
+
+    "DisplayName:TraineeId": "المتدرب",
+    "DisplayName:Title": "العنوان",
+    "DisplayName:Description": "الوصف",
+    "DisplayName:StartDate": "تاريخ البدء",
+    "DisplayName:EndDate": "تاريخ الانتهاء",
+
+    "Enum:Gender.0": "غير محدد",
+    "Enum:Gender.1": "ذكر",
+    "Enum:Gender.2": "أنثى",
+
+    "Permission:CoachApp": "كوتش آب",
+    "Permission:Trainees": "المتدربون",
+    "Permission:Trainees.Create": "إضافة متدرب",
+    "Permission:Trainees.Update": "تعديل متدرب",
+    "Permission:Trainees.Delete": "حذف متدرب",
+
+    "Permission:TrainingPlans": "الخطط التدريبية",
+    "Permission:TrainingPlans.Create": "إضافة خطة تدريبية",
+    "Permission:TrainingPlans.Update": "تعديل خطة تدريبية",
+    "Permission:TrainingPlans.Delete": "حذف خطة تدريبية",
+
+    "CoachApp:00001": "يوجد متدرب بنفس الرمز '{Code}' مسبقاً.",
+    "CoachApp:00002": "المتدرب المحدد (المعرّف: {TraineeId}) غير موجود.",
+    "CoachApp:00003": "يجب أن يكون تاريخ الانتهاء بعد تاريخ البدء."
   }
 }

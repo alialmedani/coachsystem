@@ -16,67 +16,97 @@ alwaysApply: false
 
 ### Interface (Application.Contracts)
 ```csharp
-public interface IBookAppService : IApplicationService
+public interface ITraineeAppService : IApplicationService
 {
-    Task<BookDto> GetAsync(Guid id);
-    Task<PagedResultDto<BookListItemDto>> GetListAsync(GetBookListInput input);
-    Task<BookDto> CreateAsync(CreateBookDto input);
-    Task<BookDto> UpdateAsync(Guid id, UpdateBookDto input);
+    Task<TraineeDto> GetAsync(Guid id);
+    Task<PagedResultDto<TraineeDto>> GetListAsync(GetTraineeListInput input);
+    Task<TraineeDto> CreateAsync(CreateUpdateTraineeDto input);
+    Task<TraineeDto> UpdateAsync(Guid id, CreateUpdateTraineeDto input);
     Task DeleteAsync(Guid id);
 }
 ```
 
-### Implementation (Application)
+### Implementation (Application) — fat service, generic repository, Mapster
+The AppService is **fat**: it injects the **generic `IRepository<T, Guid>`**, does its own
+querying inline, runs cross-aggregate checks, and maps out with `ObjectMapper` (Mapster). It
+does NOT delegate to a per-entity `Manager`/`Mapper` for simple CRUD.
+
 ```csharp
-public class BookAppService : ApplicationService, IBookAppService
+[Authorize(CoachAppPermissions.Trainees.Default)]
+public class TraineeAppService : CoachAppAppService, ITraineeAppService
 {
-    private readonly IBookRepository _bookRepository;
-    private readonly BookManager _bookManager;
-    private readonly BookMapper _bookMapper;
+    private readonly IRepository<Trainee, Guid> _traineeRepository;
 
-    public BookAppService(
-        IBookRepository bookRepository, 
-        BookManager bookManager,
-        BookMapper bookMapper)
+    public TraineeAppService(IRepository<Trainee, Guid> traineeRepository)
+        => _traineeRepository = traineeRepository;
+
+    public virtual async Task<TraineeDto> GetAsync(Guid id)
     {
-        _bookRepository = bookRepository;
-        _bookManager = bookManager;
-        _bookMapper = bookMapper;
+        var trainee = await _traineeRepository.GetAsync(id);
+        return ObjectMapper.Map<Trainee, TraineeDto>(trainee);
     }
 
-    public async Task<BookDto> GetAsync(Guid id)
+    public virtual async Task<PagedResultDto<TraineeDto>> GetListAsync(GetTraineeListInput input)
     {
-        var book = await _bookRepository.GetAsync(id);
-        return _bookMapper.MapToDto(book);
+        var query = await _traineeRepository.GetQueryableAsync();
+        query = query
+            .WhereIf(!string.IsNullOrWhiteSpace(input.Filter), x => x.Code.Contains(input.Filter!))
+            .WhereIf(input.IsActive.HasValue, x => x.IsActive == input.IsActive!.Value);
+
+        var totalCount = await AsyncExecuter.CountAsync(query);
+        var sorting = string.IsNullOrWhiteSpace(input.Sorting) ? $"{nameof(Trainee.Code)} asc" : input.Sorting;
+        var trainees = await AsyncExecuter.ToListAsync(
+            query.OrderBy(sorting).Skip(input.SkipCount).Take(input.MaxResultCount)); // System.Linq.Dynamic.Core
+
+        return new PagedResultDto<TraineeDto>(
+            totalCount, ObjectMapper.Map<List<Trainee>, List<TraineeDto>>(trainees));
     }
 
-    [Authorize(BookStorePermissions.Books.Create)]
-    public async Task<BookDto> CreateAsync(CreateBookDto input)
+    [Authorize(CoachAppPermissions.Trainees.Create)]
+    public virtual async Task<TraineeDto> CreateAsync(CreateUpdateTraineeDto input)
     {
-        var book = await _bookManager.CreateAsync(input.Name, input.Price);
-        await _bookRepository.InsertAsync(book);
-        return _bookMapper.MapToDto(book);
+        await CheckCodeDuplicationAsync(input.Code); // cross-aggregate uniqueness — needs the repo
+        var trainee = Trainee.Create(GuidGenerator.Create(), input.Code, input.FirstName, CurrentTenant.Id);
+        await _traineeRepository.InsertAsync(trainee, autoSave: true);
+        return ObjectMapper.Map<Trainee, TraineeDto>(trainee);
     }
 
-    [Authorize(BookStorePermissions.Books.Edit)]
-    public async Task<BookDto> UpdateAsync(Guid id, UpdateBookDto input)
+    [Authorize(CoachAppPermissions.Trainees.Update)]
+    public virtual async Task<TraineeDto> UpdateAsync(Guid id, CreateUpdateTraineeDto input)
     {
-        var book = await _bookRepository.GetAsync(id);
-        await _bookManager.ChangeNameAsync(book, input.Name);
-        book.SetPrice(input.Price);
-        await _bookRepository.UpdateAsync(book);
-        return _bookMapper.MapToDto(book);
+        var trainee = await _traineeRepository.GetAsync(id);
+        await CheckCodeDuplicationAsync(input.Code, id);
+        trainee.Code = input.Code;            // public setter for plain fields
+        trainee.FirstName = input.FirstName;
+        // trainee.SetSchedule(...) for guarded invariants
+        await _traineeRepository.UpdateAsync(trainee, autoSave: true);
+        return ObjectMapper.Map<Trainee, TraineeDto>(trainee);
+    }
+
+    protected virtual async Task CheckCodeDuplicationAsync(string code, Guid? excludedId = null)
+    {
+        var existing = await _traineeRepository.FirstOrDefaultAsync(x => x.Code == code);
+        if (existing != null && existing.Id != excludedId)
+        {
+            throw new BusinessException(CoachAppDomainErrorCodes.TraineeCodeAlreadyExists)
+                .WithData("Code", code);
+        }
     }
 }
 ```
 
 ## Application Service Best Practices
-- Don't repeat entity name in method names (`GetAsync` not `GetBookAsync`)
+- Don't repeat entity name in method names (`GetAsync` not `GetTraineeAsync`)
 - Accept/return DTOs only, never entities
-- ID not inside UpdateDto - pass separately
-- Use custom repositories when you need custom queries, generic repository is fine for simple CRUD
-- Call `UpdateAsync` explicitly (don't assume change tracking)
-- Don't call other app services in same module
+- ID not inside the Create/Update DTO - pass separately
+- **Fat service**: inject the generic `IRepository<T, Guid>` and do querying inline
+  (`GetQueryableAsync`, `WhereIf`, `System.Linq.Dynamic.Core` `.OrderBy(sorting)`, `.Skip().Take()`,
+  `AsyncExecuter`). Add a custom repository only for a genuinely complex, reused query.
+- Put cross-aggregate uniqueness/existence checks here (they need the repo), throwing
+  `BusinessException(CoachAppDomainErrorCodes.X)`; single-aggregate invariants stay on the entity.
+- Call `UpdateAsync` explicitly (don't assume change tracking); use `autoSave: true` on write.
+- Cross-feature reads are fine: call the other feature's app service, or inject its generic
+  `IRepository<T, Guid>` for an existence check.
 - Don't use `IFormFile`/`Stream` - pass `byte[]` from controllers
 - Use base class properties (`Clock`, `CurrentUser`, `GuidGenerator`, `L`) instead of injecting these services
 
@@ -84,66 +114,71 @@ public class BookAppService : ApplicationService, IBookAppService
 
 | Purpose | Convention | Example |
 |---------|------------|---------|
-| Query input | `Get{Entity}Input` | `GetBookInput` |
-| List query input | `Get{Entity}ListInput` | `GetBookListInput` |
-| Create input | `Create{Entity}Dto` | `CreateBookDto` |
-| Update input | `Update{Entity}Dto` | `UpdateBookDto` |
-| Single entity output | `{Entity}Dto` | `BookDto` |
-| List item output | `{Entity}ListItemDto` | `BookListItemDto` |
+| List query input | `Get{Entity}ListInput` | `GetTraineeListInput` |
+| Create + update input | `CreateUpdate{Entity}Dto` | `CreateUpdateTraineeDto` |
+| Single entity output | `{Entity}Dto` | `TraineeDto` |
+
+CoachApp uses **one combined `CreateUpdate{Entity}Dto`** for both create and update (mirroring
+`CreateUpdateTraineeDto`). Split into separate `Create`/`Update` DTOs only when the two shapes
+genuinely diverge. Output DTOs derive from `FullAuditedEntityDto<Guid>`.
 
 ## DTO Location
-- Define DTOs in `*.Application.Contracts` project
-- This allows sharing with clients (Blazor, HttpApi.Client)
+- Define DTOs in `CoachApp.Application.Contracts` under `Entites/<Feature>/`
+  (namespace `CoachApp.Entites.<Feature>`), alongside `I<Entity>AppService`.
+- This allows sharing with clients (HttpApi.Client, generated proxies).
 
 ## Validation
 
+Input validation is **DataAnnotations on the DTO** (the primary and default mechanism). Source
+string lengths from `<Entity>Consts` so the DTO, entity and EF config never drift.
+
+> **Do NOT use FluentValidation** in CoachApp. Input format/required-field checks = DataAnnotations;
+> business invariants = `Check.*` + `BusinessException` in the entity (or the fat AppService when
+> the rule needs the repository).
+
 ### Data Annotations
 ```csharp
-public class CreateBookDto
+public class CreateUpdateTraineeDto
 {
     [Required]
-    [StringLength(100, MinimumLength = 3)]
-    public string Name { get; set; }
+    [StringLength(TraineeConsts.MaxCodeLength)]
+    public string Code { get; set; } = string.Empty;
 
-    [Range(0, 999.99)]
-    public decimal Price { get; set; }
+    [Required]
+    [StringLength(TraineeConsts.MaxFirstNameLength)]
+    public string FirstName { get; set; } = string.Empty;
+
+    [EmailAddress]
+    [StringLength(TraineeConsts.MaxEmailLength)]
+    public string? Email { get; set; }
+
+    public bool IsActive { get; set; } = true;
 }
 ```
 
 ### Custom Validation with IValidatableObject
 Before adding custom validation, decide if it's a **domain rule** or **application rule**:
-- **Domain rule**: Put validation in entity constructor or domain service (enforces business invariants)
-- **Application rule**: Use DTO validation (input format, required fields)
+- **Domain rule**: Put validation in the entity's `static Create`/behavior method (enforces invariants),
+  or in the fat AppService when it needs the repository (cross-aggregate).
+- **Application rule**: Use DTO DataAnnotations (input format, required fields).
 
 Only use `IValidatableObject` for application-level validation that can't be expressed with data annotations:
 
 ```csharp
-public class CreateBookDto : IValidatableObject
+public class CreateUpdateTraineeDto : IValidatableObject
 {
-    public string Name { get; set; }
-    public string Description { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (Name == Description)
+        if (FirstName == LastName)
         {
             yield return new ValidationResult(
-                "Name and Description cannot be the same!",
-                new[] { nameof(Name), nameof(Description) }
+                "FirstName and LastName cannot be the same!",
+                new[] { nameof(FirstName), nameof(LastName) }
             );
         }
-    }
-}
-```
-
-### FluentValidation
-```csharp
-public class CreateBookDtoValidator : AbstractValidator<CreateBookDto>
-{
-    public CreateBookDtoValidator()
-    {
-        RuleFor(x => x.Name).NotEmpty().Length(3, 100);
-        RuleFor(x => x.Price).GreaterThan(0);
     }
 }
 ```
@@ -151,23 +186,26 @@ public class CreateBookDtoValidator : AbstractValidator<CreateBookDto>
 ## Error Handling
 
 ### Business Exceptions
+Use a constant from `CoachAppDomainErrorCodes` (`"CoachApp:0000N"`), mapped to a localization key:
 ```csharp
-throw new BusinessException("BookStore:010001")
-    .WithData("BookName", name);
+throw new BusinessException(CoachAppDomainErrorCodes.TraineeCodeAlreadyExists)
+    .WithData("Code", code);
 ```
 
 ### Entity Not Found
+`IRepository.GetAsync(id)` already throws `EntityNotFoundException` when missing — you rarely
+need to check explicitly. Use `FindAsync` only when a null result is a valid path:
 ```csharp
-var book = await _bookRepository.FindAsync(id);
-if (book == null)
+var trainee = await _traineeRepository.FindAsync(id);
+if (trainee == null)
 {
-    throw new EntityNotFoundException(typeof(Book), id);
+    throw new EntityNotFoundException(typeof(Trainee), id);
 }
 ```
 
 ### User-Friendly Exceptions
 ```csharp
-throw new UserFriendlyException(L["BookNotAvailable"]);
+throw new UserFriendlyException(L["TraineeNotAvailable"]);
 ```
 
 ### HTTP Status Code Mapping
@@ -187,50 +225,48 @@ ABP automatically generates API controllers for application services:
 - HTTP methods determined by method name prefix (Get, Create, Update, Delete)
 - Use `[RemoteService(false)]` to disable auto API generation for specific methods
 
-## Object Mapping (Mapperly / AutoMapper)
-ABP supports **both Mapperly and AutoMapper** integrations. But the default mapping library is Mapperly. You need to first check the project's active mapping library.
-- Prefer the mapping provider already used in the solution (check existing mapping files / loaded modules).
-- In mixed solutions, explicitly setting the default provider may be required (see `docs/en/release-info/migration-guides/AutoMapper-To-Mapperly.md`).
+## Object Mapping (Mapster)
+CoachApp uses **Mapster** — NOT Mapperly, NOT AutoMapper. Do not add `[Mapper]`/`MapperBase`
+(Mapperly), `CreateMap`/`Profile` (AutoMapper), or scatter `.Adapt<T>()` calls in services.
+Always map through ABP's `ObjectMapper.Map<TSource, TDestination>()`.
 
-### Mapperly (compile-time)
-Define mappers as partial classes:
+### Central config
+All mappings live in one place — `CoachAppMapsterConfig.Configure()` in the Application project —
+as one `TypeAdapterConfig<Entity, Dto>.NewConfig()` line per mapping, grouped by feature.
+Map **entity → DTO only**; Create/Update flow through the aggregate's `Create`/behavior methods,
+not through mapping.
 
 ```csharp
-[Mapper]
-public partial class BookMapper
+// src/CoachApp.Application/CoachAppMapsterConfig.cs
+public static class CoachAppMapsterConfig
 {
-    public partial BookDto MapToDto(Book book);
-    public partial List<BookDto> MapToDtoList(List<Book> books);
-}
-```
-
-Register in module:
-```csharp
-public override void ConfigureServices(ServiceConfigurationContext context)
-{
-    context.Services.AddSingleton<BookMapper>();
-}
-```
-
-Usage in application service:
-```csharp
-public class BookAppService : ApplicationService
-{
-    private readonly BookMapper _bookMapper;
-    
-    public BookAppService(BookMapper bookMapper)
+    public static void Configure()
     {
-        _bookMapper = bookMapper;
-    }
-    
-    public BookDto GetBook(Book book)
-    {
-        return _bookMapper.MapToDto(book);
+        // ── Trainees ──────────────────────────────────────────────────────────
+        TypeAdapterConfig<Trainee, TraineeDto>.NewConfig();
+
+        // ── TrainingPlans ─────────────────────────────────────────────────────
+        TypeAdapterConfig<TrainingPlan, TrainingPlanDto>.NewConfig();
     }
 }
 ```
+Use `.Ignore(...)` for properties the AppService fills manually and
+`.Map(dest => ..., src => ...)` for name/shape mismatches.
 
-> **Note**: Mapperly generates mapping code at compile-time, providing better performance than runtime mappers.
+### Registration
+`MapsterObjectMapper : IAutoObjectMappingProvider` routes ABP's `ObjectMapper` through Mapster.
+`CoachAppApplicationModule` calls `CoachAppMapsterConfig.Configure()`, registers the config +
+`IMapper`, and installs `MapsterObjectMapper` as the app's `IAutoObjectMappingProvider`.
 
-### AutoMapper (runtime)
-If the solution uses AutoMapper, mappings are typically defined in `Profile` classes and registered via ABP's AutoMapper integration.
+### Usage in application service
+```csharp
+public virtual async Task<TraineeDto> GetAsync(Guid id)
+{
+    var trainee = await _traineeRepository.GetAsync(id);
+    return ObjectMapper.Map<Trainee, TraineeDto>(trainee);        // single
+    // ObjectMapper.Map<List<Trainee>, List<TraineeDto>>(list)    // list
+}
+```
+
+> **Note**: Because mapping goes through `ObjectMapper`, services stay decoupled from the mapping
+> library — only `CoachAppMapsterConfig` and the module registration know it is Mapster.

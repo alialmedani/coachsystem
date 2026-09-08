@@ -4,6 +4,54 @@
     "AppName": "CoachApp",
     "Menu:Home": "Home",
     "LongWelcomeMessage": "Welcome to the application. This is a startup project based on the ABP framework. For more information visit",
-    "Welcome": "Welcome"
+    "Welcome": "Welcome",
+
+    "Menu:Training": "Training",
+    "Menu:Trainees": "Trainees",
+    "Trainees": "Trainees",
+    "Trainee": "Trainee",
+    "NewTrainee": "New Trainee",
+    "EditTrainee": "Edit Trainee",
+
+    "Menu:TrainingPlans": "Training Plans",
+    "TrainingPlans": "Training Plans",
+    "TrainingPlan": "Training Plan",
+    "NewTrainingPlan": "New Training Plan",
+    "EditTrainingPlan": "Edit Training Plan",
+
+    "DisplayName:Code": "Code",
+    "DisplayName:FirstName": "First Name",
+    "DisplayName:LastName": "Last Name",
+    "DisplayName:Gender": "Gender",
+    "DisplayName:BirthDate": "Birth Date",
+    "DisplayName:Email": "Email",
+    "DisplayName:PhoneNumber": "Phone Number",
+    "DisplayName:Address": "Address",
+    "DisplayName:IsActive": "Active",
+
+    "DisplayName:TraineeId": "Trainee",
+    "DisplayName:Title": "Title",
+    "DisplayName:Description": "Description",
+    "DisplayName:StartDate": "Start Date",
+    "DisplayName:EndDate": "End Date",
+
+    "Enum:Gender.0": "Unspecified",
+    "Enum:Gender.1": "Male",
+    "Enum:Gender.2": "Female",
+
+    "Permission:CoachApp": "CoachApp",
+    "Permission:Trainees": "Trainees",
+    "Permission:Trainees.Create": "Create Trainee",
+    "Permission:Trainees.Update": "Edit Trainee",
+    "Permission:Trainees.Delete": "Delete Trainee",
+
+    "Permission:TrainingPlans": "Training Plans",
+    "Permission:TrainingPlans.Create": "Create Training Plan",
+    "Permission:TrainingPlans.Update": "Edit Training Plan",
+    "Permission:TrainingPlans.Delete": "Delete Training Plan",
+
+    "CoachApp:00001": "A trainee with the code '{Code}' already exists.",
+    "CoachApp:00002": "The selected trainee (Id: {TraineeId}) does not exist.",
+    "CoachApp:00003": "The end date must be later than the start date."
   }
 }
