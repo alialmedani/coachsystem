@@ -4,6 +4,9 @@ using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using CoachApp.Entites.Foods;
+using CoachApp.Entites.NutritionLogs;
+using CoachApp.Entites.NutritionPlans;
+using CoachApp.Entites.NutritionPlanTemplates;
 using CoachApp.Permissions;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
@@ -17,10 +20,20 @@ namespace CoachApp.Apis.Foods;
 public class FoodAppService : CoachAppAppService, IFoodAppService
 {
     private readonly IRepository<Food, Guid> _foodRepository;
+    private readonly IRepository<MealItem, Guid> _mealItemRepository;
+    private readonly IRepository<NutritionTemplateItem, Guid> _templateItemRepository;
+    private readonly IRepository<NutritionLogEntry, Guid> _nutritionLogEntryRepository;
 
-    public FoodAppService(IRepository<Food, Guid> foodRepository)
+    public FoodAppService(
+        IRepository<Food, Guid> foodRepository,
+        IRepository<MealItem, Guid> mealItemRepository,
+        IRepository<NutritionTemplateItem, Guid> templateItemRepository,
+        IRepository<NutritionLogEntry, Guid> nutritionLogEntryRepository)
     {
         _foodRepository = foodRepository;
+        _mealItemRepository = mealItemRepository;
+        _templateItemRepository = templateItemRepository;
+        _nutritionLogEntryRepository = nutritionLogEntryRepository;
     }
 
     public virtual async Task<FoodDto> GetAsync(Guid id)
@@ -97,6 +110,14 @@ public class FoodAppService : CoachAppAppService, IFoodAppService
     [Authorize(CoachAppPermissions.Coach.Foods.Delete)]
     public virtual async Task DeleteAsync(Guid id)
     {
+        // Don't orphan references: block the delete if the food is used anywhere.
+        if (await _mealItemRepository.CountAsync(x => x.FoodId == id) > 0
+            || await _templateItemRepository.CountAsync(x => x.FoodId == id) > 0
+            || await _nutritionLogEntryRepository.CountAsync(x => x.FoodId == id) > 0)
+        {
+            throw new UserFriendlyException(L["FoodInUse"]);
+        }
+
         await _foodRepository.DeleteAsync(id);
     }
 }

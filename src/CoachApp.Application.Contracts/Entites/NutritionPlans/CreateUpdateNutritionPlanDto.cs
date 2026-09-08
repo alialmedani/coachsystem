@@ -18,5 +18,11 @@ public class CreateUpdateNutritionPlanDto
 
     public bool IsActive { get; set; }
 
+    // Optional coach-set daily targets; leave null to use the plan's meal totals.
+    [Range(0, 100000)] public decimal? TargetCalories { get; set; }
+    [Range(0, 100000)] public decimal? TargetProteinG { get; set; }
+    [Range(0, 100000)] public decimal? TargetCarbsG { get; set; }
+    [Range(0, 100000)] public decimal? TargetFatG { get; set; }
+
     public List<CreateUpdateMealDto> Meals { get; set; } = new();
 }

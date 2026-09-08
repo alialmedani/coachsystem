@@ -72,15 +72,21 @@ internal static class DashboardCalculator
             var planDto = objectMapper.Map<NutritionPlan, NutritionPlanDto>(activePlan);
             await NutritionPlanEnricher.EnrichAsync(planDto, foodRepository);
 
-            dto.TargetCalories = planDto.TotalCalories;
-            dto.TargetProteinG = planDto.TotalProteinG;
-            dto.TargetCarbsG = planDto.TotalCarbsG;
-            dto.TargetFatG = planDto.TotalFatG;
+            // Prefer the coach's explicit targets; fall back to the plan's meal totals.
+            var targetCalories = planDto.TargetCalories ?? planDto.TotalCalories;
+            var targetProtein = planDto.TargetProteinG ?? planDto.TotalProteinG;
+            var targetCarbs = planDto.TargetCarbsG ?? planDto.TotalCarbsG;
+            var targetFat = planDto.TargetFatG ?? planDto.TotalFatG;
 
-            dto.CaloriesPercent = Percent(consumedCalories, planDto.TotalCalories);
-            dto.ProteinPercent = Percent(consumedProtein, planDto.TotalProteinG);
-            dto.CarbsPercent = Percent(consumedCarbs, planDto.TotalCarbsG);
-            dto.FatPercent = Percent(consumedFat, planDto.TotalFatG);
+            dto.TargetCalories = targetCalories;
+            dto.TargetProteinG = targetProtein;
+            dto.TargetCarbsG = targetCarbs;
+            dto.TargetFatG = targetFat;
+
+            dto.CaloriesPercent = Percent(consumedCalories, targetCalories);
+            dto.ProteinPercent = Percent(consumedProtein, targetProtein);
+            dto.CarbsPercent = Percent(consumedCarbs, targetCarbs);
+            dto.FatPercent = Percent(consumedFat, targetFat);
             dto.OverallPercent = dto.CaloriesPercent;
         }
 

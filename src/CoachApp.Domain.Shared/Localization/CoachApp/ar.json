@@ -97,6 +97,11 @@
     "TheSelectedTraineeDoesNotExist": "المتدرب المحدد غير موجود.",
     "OneOrMoreExercisesDoNotExist": "واحد أو أكثر من التمارين المحددة غير موجود.",
     "OneOrMoreFoodsDoNotExist": "واحد أو أكثر من الأطعمة المحددة غير موجود.",
+    "ExerciseInUse": "هذا التمرين مُستخدم في خطة أو قالب أو سجل ولا يمكن حذفه. قم بتعطيله بدلاً من ذلك.",
+    "FoodInUse": "هذا الطعام مُستخدم في خطة أو قالب أو سجل ولا يمكن حذفه. قم بتعطيله بدلاً من ذلك.",
+    "DisplayName:TargetProteinG": "البروتين المستهدف (غ)",
+    "DisplayName:TargetCarbsG": "الكربوهيدرات المستهدفة (غ)",
+    "DisplayName:TargetFatG": "الدهون المستهدفة (غ)",
 
     "Menu:NutritionPlans": "الخطط الغذائية",
     "NutritionPlans": "الخطط الغذائية",

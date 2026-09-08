@@ -14,6 +14,12 @@ public class NutritionPlanDto : FullAuditedEntityDto<Guid>
 
     public bool IsActive { get; set; }
 
+    // Optional coach-set daily targets (null when not set).
+    public decimal? TargetCalories { get; set; }
+    public decimal? TargetProteinG { get; set; }
+    public decimal? TargetCarbsG { get; set; }
+    public decimal? TargetFatG { get; set; }
+
     public List<MealDto> Meals { get; set; } = new();
 
     // Plan totals, summed from all meal items (enriched in the app service).

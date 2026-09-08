@@ -16,6 +16,11 @@ public class NutritionPlanConfiguration : IEntityTypeConfiguration<NutritionPlan
         b.Property(x => x.Name).IsRequired().HasMaxLength(NutritionPlanConsts.MaxNameLength);
         b.Property(x => x.Description).HasMaxLength(NutritionPlanConsts.MaxDescriptionLength);
 
+        b.Property(x => x.TargetCalories).HasColumnType("decimal(9,2)");
+        b.Property(x => x.TargetProteinG).HasColumnType("decimal(9,2)");
+        b.Property(x => x.TargetCarbsG).HasColumnType("decimal(9,2)");
+        b.Property(x => x.TargetFatG).HasColumnType("decimal(9,2)");
+
         b.HasMany(x => x.Meals)
             .WithOne()
             .HasForeignKey(x => x.NutritionPlanId)

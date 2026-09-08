@@ -24,6 +24,13 @@ public class NutritionPlan : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public virtual bool IsActive { get; set; }
 
+    // Optional coach-set daily targets. When null, the plan's computed meal totals
+    // are treated as the target (see the dashboard).
+    public virtual decimal? TargetCalories { get; set; }
+    public virtual decimal? TargetProteinG { get; set; }
+    public virtual decimal? TargetCarbsG { get; set; }
+    public virtual decimal? TargetFatG { get; set; }
+
     public virtual ICollection<Meal> Meals { get; protected set; }
 
     protected NutritionPlan()

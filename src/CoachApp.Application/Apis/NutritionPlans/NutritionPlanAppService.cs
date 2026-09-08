@@ -63,6 +63,7 @@ public class NutritionPlanAppService : CoachAppAppService, INutritionPlanAppServ
         await CheckFoodsExistAsync(input);
 
         var plan = NutritionPlan.Create(GuidGenerator.Create(), input.TraineeId, input.Name, input.Description, CurrentTenant.Id);
+        ApplyTargets(plan, input);
         BuildMeals(plan, input);
 
         await _planRepository.InsertAsync(plan, autoSave: true);
@@ -90,6 +91,7 @@ public class NutritionPlanAppService : CoachAppAppService, INutritionPlanAppServ
 
         plan.Name = input.Name;
         plan.Description = input.Description;
+        ApplyTargets(plan, input);
 
         plan.ClearMeals();
         BuildMeals(plan, input);
@@ -124,6 +126,14 @@ public class NutritionPlanAppService : CoachAppAppService, INutritionPlanAppServ
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
+
+    private static void ApplyTargets(NutritionPlan plan, CreateUpdateNutritionPlanDto input)
+    {
+        plan.TargetCalories = input.TargetCalories;
+        plan.TargetProteinG = input.TargetProteinG;
+        plan.TargetCarbsG = input.TargetCarbsG;
+        plan.TargetFatG = input.TargetFatG;
+    }
 
     private void BuildMeals(NutritionPlan plan, CreateUpdateNutritionPlanDto input)
     {

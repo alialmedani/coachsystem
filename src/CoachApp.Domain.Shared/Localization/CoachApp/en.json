@@ -93,6 +93,11 @@
     "TheSelectedTraineeDoesNotExist": "The selected trainee does not exist.",
     "OneOrMoreExercisesDoNotExist": "One or more selected exercises do not exist.",
     "OneOrMoreFoodsDoNotExist": "One or more selected foods do not exist.",
+    "ExerciseInUse": "This exercise is used by a workout plan, template, or log and cannot be deleted. Deactivate it instead.",
+    "FoodInUse": "This food is used by a nutrition plan, template, or log and cannot be deleted. Deactivate it instead.",
+    "DisplayName:TargetProteinG": "Target Protein (g)",
+    "DisplayName:TargetCarbsG": "Target Carbs (g)",
+    "DisplayName:TargetFatG": "Target Fat (g)",
 
     "Menu:NutritionPlans": "Nutrition Plans",
     "NutritionPlans": "Nutrition Plans",
