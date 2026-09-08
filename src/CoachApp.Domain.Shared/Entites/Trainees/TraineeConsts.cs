@@ -7,10 +7,11 @@ namespace CoachApp.Entites.Trainees;
 /// </summary>
 public static class TraineeConsts
 {
-    public const int MaxCodeLength = 32;
+    public const int MaxUserNameLength = 256;
     public const int MaxFirstNameLength = 64;
     public const int MaxLastNameLength = 64;
     public const int MaxEmailLength = 256;
     public const int MaxPhoneNumberLength = 32;
-    public const int MaxAddressLength = 512;
+    public const int MinPasswordLength = 6;
+    public const int MaxPasswordLength = 128;
 }
