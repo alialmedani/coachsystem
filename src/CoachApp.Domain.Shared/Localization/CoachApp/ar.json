@@ -107,6 +107,10 @@
     "WorkoutLog": "سجل تمرين",
     "DisplayName:Date": "التاريخ",
 
+    "Menu:NutritionLogs": "سجلات التغذية",
+    "NutritionLogs": "سجلات التغذية",
+    "NutritionLog": "سجل تغذية",
+
     "Menu:Foods": "الأطعمة",
     "Foods": "الأطعمة",
     "Food": "طعام",

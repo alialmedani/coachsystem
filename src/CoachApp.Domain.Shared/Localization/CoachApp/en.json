@@ -103,6 +103,10 @@
     "WorkoutLog": "Workout Log",
     "DisplayName:Date": "Date",
 
+    "Menu:NutritionLogs": "Nutrition Logs",
+    "NutritionLogs": "Nutrition Logs",
+    "NutritionLog": "Nutrition Log",
+
     "Menu:Foods": "Foods",
     "Foods": "Foods",
     "Food": "Food",
