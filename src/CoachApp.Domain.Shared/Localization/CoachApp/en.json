@@ -95,6 +95,7 @@
     "OneOrMoreFoodsDoNotExist": "One or more selected foods do not exist.",
     "ExerciseInUse": "This exercise is used by a workout plan, template, or log and cannot be deleted. Deactivate it instead.",
     "FoodInUse": "This food is used by a nutrition plan, template, or log and cannot be deleted. Deactivate it instead.",
+    "DisplayName:TargetCalories": "Target Calories",
     "DisplayName:TargetProteinG": "Target Protein (g)",
     "DisplayName:TargetCarbsG": "Target Carbs (g)",
     "DisplayName:TargetFatG": "Target Fat (g)",

@@ -99,6 +99,7 @@
     "OneOrMoreFoodsDoNotExist": "واحد أو أكثر من الأطعمة المحددة غير موجود.",
     "ExerciseInUse": "هذا التمرين مُستخدم في خطة أو قالب أو سجل ولا يمكن حذفه. قم بتعطيله بدلاً من ذلك.",
     "FoodInUse": "هذا الطعام مُستخدم في خطة أو قالب أو سجل ولا يمكن حذفه. قم بتعطيله بدلاً من ذلك.",
+    "DisplayName:TargetCalories": "السعرات المستهدفة",
     "DisplayName:TargetProteinG": "البروتين المستهدف (غ)",
     "DisplayName:TargetCarbsG": "الكربوهيدرات المستهدفة (غ)",
     "DisplayName:TargetFatG": "الدهون المستهدفة (غ)",
