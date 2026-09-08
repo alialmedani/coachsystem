@@ -89,6 +89,11 @@
     "TheSelectedTraineeDoesNotExist": "The selected trainee does not exist.",
     "OneOrMoreExercisesDoNotExist": "One or more selected exercises do not exist.",
 
+    "Menu:WorkoutLogs": "Workout Logs",
+    "WorkoutLogs": "Workout Logs",
+    "WorkoutLog": "Workout Log",
+    "DisplayName:Date": "Date",
+
     "Role:Coach": "Coach",
     "Role:Trainee": "Trainee",
 

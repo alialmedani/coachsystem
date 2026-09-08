@@ -1,5 +1,6 @@
 using CoachApp.Entites.Exercises;
 using CoachApp.Entites.Trainees;
+using CoachApp.Entites.WorkoutLogs;
 using CoachApp.Entites.WorkoutPlans;
 using Mapster;
 
@@ -25,7 +26,10 @@ public static class CoachAppMapsterConfig
         // ── WorkoutPlans (nested; ExerciseName enriched in the app service) ─────
         TypeAdapterConfig<WorkoutPlan, WorkoutPlanDto>.NewConfig();
         TypeAdapterConfig<WorkoutDay, WorkoutDayDto>.NewConfig();
-        // ExerciseName has no source member; the app service enriches it after mapping.
         TypeAdapterConfig<WorkoutExercise, WorkoutExerciseDto>.NewConfig();
+
+        // ── WorkoutLogs (ExerciseName enriched in the app service) ──────────────
+        TypeAdapterConfig<WorkoutLog, WorkoutLogDto>.NewConfig();
+        TypeAdapterConfig<WorkoutLogEntry, WorkoutLogEntryDto>.NewConfig();
     }
 }

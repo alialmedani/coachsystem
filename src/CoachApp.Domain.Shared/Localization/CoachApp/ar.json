@@ -93,6 +93,11 @@
     "TheSelectedTraineeDoesNotExist": "المتدرب المحدد غير موجود.",
     "OneOrMoreExercisesDoNotExist": "واحد أو أكثر من التمارين المحددة غير موجود.",
 
+    "Menu:WorkoutLogs": "سجلات التمارين",
+    "WorkoutLogs": "سجلات التمارين",
+    "WorkoutLog": "سجل تمرين",
+    "DisplayName:Date": "التاريخ",
+
     "Role:Coach": "المدرب",
     "Role:Trainee": "المتدرب",
 
