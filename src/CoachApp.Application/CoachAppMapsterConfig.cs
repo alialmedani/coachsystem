@@ -1,5 +1,4 @@
 using CoachApp.Entites.Trainees;
-using CoachApp.Entites.TrainingPlans;
 using Mapster;
 
 namespace CoachApp;
@@ -17,8 +16,5 @@ public static class CoachAppMapsterConfig
     {
         // ── Trainees ──────────────────────────────────────────────────────────
         TypeAdapterConfig<Trainee, TraineeDto>.NewConfig();
-
-        // ── TrainingPlans ─────────────────────────────────────────────────────
-        TypeAdapterConfig<TrainingPlan, TrainingPlanDto>.NewConfig();
     }
 }

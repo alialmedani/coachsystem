@@ -15,7 +15,6 @@ using Volo.Abp.OpenIddict.EntityFrameworkCore;
 using Volo.Abp.TenantManagement;
 using Volo.Abp.TenantManagement.EntityFrameworkCore;
 using CoachApp.Entites.Trainees;
-using CoachApp.Entites.TrainingPlans;
 
 namespace CoachApp.EntityFrameworkCore;
 
@@ -30,7 +29,6 @@ public class CoachAppDbContext :
     /* Add DbSet properties for your Aggregate Roots / Entities here. */
 
     public DbSet<Trainee> Trainees { get; set; }
-    public DbSet<TrainingPlan> TrainingPlans { get; set; }
 
     #region Entities from the modules
 

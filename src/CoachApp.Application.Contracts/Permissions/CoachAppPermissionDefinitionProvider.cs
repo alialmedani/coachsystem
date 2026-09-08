@@ -10,15 +10,33 @@ public class CoachAppPermissionDefinitionProvider : PermissionDefinitionProvider
     {
         var group = context.AddGroup(CoachAppPermissions.GroupName, L("Permission:CoachApp"));
 
-        var trainees = group.AddPermission(CoachAppPermissions.Trainees.Default, L("Permission:Trainees"));
-        trainees.AddChild(CoachAppPermissions.Trainees.Create, L("Permission:Trainees.Create"));
-        trainees.AddChild(CoachAppPermissions.Trainees.Update, L("Permission:Trainees.Update"));
-        trainees.AddChild(CoachAppPermissions.Trainees.Delete, L("Permission:Trainees.Delete"));
+        // ── Coach (management) ────────────────────────────────────────────────
+        AddCrud(group, CoachAppPermissions.Coach.Trainees.Default, "Coach.Trainees");
+        AddCrud(group, CoachAppPermissions.Coach.Exercises.Default, "Coach.Exercises");
+        AddCrud(group, CoachAppPermissions.Coach.WorkoutPlans.Default, "Coach.WorkoutPlans");
+        AddCrud(group, CoachAppPermissions.Coach.Foods.Default, "Coach.Foods");
+        AddCrud(group, CoachAppPermissions.Coach.NutritionPlans.Default, "Coach.NutritionPlans");
+        group.AddPermission(CoachAppPermissions.Coach.Tracking.Default, L("Permission:Coach.Tracking"));
 
-        var trainingPlans = group.AddPermission(CoachAppPermissions.TrainingPlans.Default, L("Permission:TrainingPlans"));
-        trainingPlans.AddChild(CoachAppPermissions.TrainingPlans.Create, L("Permission:TrainingPlans.Create"));
-        trainingPlans.AddChild(CoachAppPermissions.TrainingPlans.Update, L("Permission:TrainingPlans.Update"));
-        trainingPlans.AddChild(CoachAppPermissions.TrainingPlans.Delete, L("Permission:TrainingPlans.Delete"));
+        // ── Trainee (self-service) ────────────────────────────────────────────
+        group.AddPermission(CoachAppPermissions.Trainee.MyProfile.Default, L("Permission:Trainee.MyProfile"));
+        group.AddPermission(CoachAppPermissions.Trainee.MyWorkoutPlans.Default, L("Permission:Trainee.MyWorkoutPlans"));
+
+        var workoutLogs = group.AddPermission(CoachAppPermissions.Trainee.WorkoutLogs.Default, L("Permission:Trainee.WorkoutLogs"));
+        workoutLogs.AddChild(CoachAppPermissions.Trainee.WorkoutLogs.Create, L("Permission:Trainee.WorkoutLogs.Create"));
+
+        group.AddPermission(CoachAppPermissions.Trainee.MyNutritionPlans.Default, L("Permission:Trainee.MyNutritionPlans"));
+
+        var nutritionLogs = group.AddPermission(CoachAppPermissions.Trainee.NutritionLogs.Default, L("Permission:Trainee.NutritionLogs"));
+        nutritionLogs.AddChild(CoachAppPermissions.Trainee.NutritionLogs.Create, L("Permission:Trainee.NutritionLogs.Create"));
+    }
+
+    private static void AddCrud(PermissionGroupDefinition group, string defaultName, string localizationKey)
+    {
+        var permission = group.AddPermission(defaultName, L($"Permission:{localizationKey}"));
+        permission.AddChild(defaultName + ".Create", L($"Permission:{localizationKey}.Create"));
+        permission.AddChild(defaultName + ".Update", L($"Permission:{localizationKey}.Update"));
+        permission.AddChild(defaultName + ".Delete", L($"Permission:{localizationKey}.Delete"));
     }
 
     private static LocalizableString L(string name)

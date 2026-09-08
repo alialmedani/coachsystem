@@ -8,7 +8,6 @@ namespace CoachApp;
 /// </summary>
 public static class CoachAppDomainErrorCodes
 {
-    public const string TraineeCodeAlreadyExists = "CoachApp:00001";
-    public const string TrainingPlanTraineeNotFound = "CoachApp:00002";
-    public const string TrainingPlanInvalidDateRange = "CoachApp:00003";
+    // Reserve codes here as business rules are added, e.g.:
+    // public const string SomeRuleViolated = "CoachApp:00001";
 }

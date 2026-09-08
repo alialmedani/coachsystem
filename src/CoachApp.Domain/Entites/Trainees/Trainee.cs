@@ -7,31 +7,41 @@ using Volo.Abp.MultiTenancy;
 namespace CoachApp.Entites.Trainees;
 
 /// <summary>
-/// Trainee aggregate root. Pragmatic domain model (see the CoachApp conventions):
-/// properties are publicly settable for straightforward CRUD, while construction
-/// goes through <see cref="Create"/>, which validates the required fields and
-/// stamps the identity and tenant. Cross-aggregate rules that need I/O (unique
-/// code) are enforced in the application service.
+/// Trainee coaching profile. Each trainee is created by their coach, who also
+/// provisions the login: <see cref="UserId"/> links this profile 1:1 to an ABP
+/// <c>IdentityUser</c> (role "Trainee") in the coach's tenant. Identity/credentials
+/// live on the user; coaching data (goal, body metrics) lives here. Tenant-scoped,
+/// so ABP's tenant filter isolates each coach's trainees automatically.
 /// </summary>
 public class Trainee : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
     public virtual Guid? TenantId { get; set; }
 
-    public virtual string Code { get; set; } = string.Empty;
+    /// <summary>The linked <c>IdentityUser</c> that owns this trainee's login.</summary>
+    public virtual Guid UserId { get; set; }
+
+    /// <summary>Snapshot of the login user name (immutable for a trainee).</summary>
+    public virtual string UserName { get; set; } = string.Empty;
 
     public virtual string FirstName { get; set; } = string.Empty;
 
     public virtual string LastName { get; set; } = string.Empty;
 
-    public virtual Gender Gender { get; set; }
-
-    public virtual DateTime? BirthDate { get; set; }
-
     public virtual string? Email { get; set; }
 
     public virtual string? PhoneNumber { get; set; }
 
-    public virtual string? Address { get; set; }
+    public virtual Gender Gender { get; set; }
+
+    public virtual DateTime? BirthDate { get; set; }
+
+    public virtual TrainingGoal Goal { get; set; }
+
+    public virtual decimal? HeightCm { get; set; }
+
+    public virtual decimal? StartWeightKg { get; set; }
+
+    public virtual decimal? TargetWeightKg { get; set; }
 
     public virtual bool IsActive { get; set; }
 
@@ -41,32 +51,41 @@ public class Trainee : FullAuditedAggregateRoot<Guid>, IMultiTenant
     }
 
     /// <summary>
-    /// Creates a valid trainee: generates identity at the call site, validates the
-    /// required fields and field lengths, stamps the tenant and activates the record.
+    /// Creates a trainee profile bound to an already-created identity user. The
+    /// application service creates the <c>IdentityUser</c> first, then calls this
+    /// with the resulting <paramref name="userId"/>.
     /// </summary>
     public static Trainee Create(
         Guid id,
-        string code,
+        Guid userId,
+        string userName,
         string firstName,
         string lastName,
         Gender gender = Gender.Unspecified,
         DateTime? birthDate = null,
         string? email = null,
         string? phoneNumber = null,
-        string? address = null,
+        TrainingGoal goal = TrainingGoal.General,
+        decimal? heightCm = null,
+        decimal? startWeightKg = null,
+        decimal? targetWeightKg = null,
         Guid? tenantId = null)
     {
         return new Trainee
         {
             Id = id,
-            Code = Check.NotNullOrWhiteSpace(code, nameof(code), TraineeConsts.MaxCodeLength),
+            UserId = userId,
+            UserName = Check.NotNullOrWhiteSpace(userName, nameof(userName), TraineeConsts.MaxUserNameLength),
             FirstName = Check.NotNullOrWhiteSpace(firstName, nameof(firstName), TraineeConsts.MaxFirstNameLength),
             LastName = Check.NotNullOrWhiteSpace(lastName, nameof(lastName), TraineeConsts.MaxLastNameLength),
             Gender = gender,
             BirthDate = birthDate,
             Email = Check.Length(email, nameof(email), TraineeConsts.MaxEmailLength),
             PhoneNumber = Check.Length(phoneNumber, nameof(phoneNumber), TraineeConsts.MaxPhoneNumberLength),
-            Address = Check.Length(address, nameof(address), TraineeConsts.MaxAddressLength),
+            Goal = goal,
+            HeightCm = heightCm,
+            StartWeightKg = startWeightKg,
+            TargetWeightKg = targetWeightKg,
             TenantId = tenantId,
             IsActive = true
         };
