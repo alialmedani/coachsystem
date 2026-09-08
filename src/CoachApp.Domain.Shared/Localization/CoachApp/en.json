@@ -94,6 +94,18 @@
     "WorkoutLog": "Workout Log",
     "DisplayName:Date": "Date",
 
+    "Menu:Foods": "Foods",
+    "Foods": "Foods",
+    "Food": "Food",
+    "NewFood": "New Food",
+    "EditFood": "Edit Food",
+    "DisplayName:ServingSize": "Serving Size",
+    "DisplayName:ServingUnit": "Unit",
+    "DisplayName:Calories": "Calories",
+    "DisplayName:ProteinG": "Protein (g)",
+    "DisplayName:CarbsG": "Carbs (g)",
+    "DisplayName:FatG": "Fat (g)",
+
     "Role:Coach": "Coach",
     "Role:Trainee": "Trainee",
 

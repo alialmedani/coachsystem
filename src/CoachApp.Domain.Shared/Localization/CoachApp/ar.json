@@ -98,6 +98,18 @@
     "WorkoutLog": "سجل تمرين",
     "DisplayName:Date": "التاريخ",
 
+    "Menu:Foods": "الأطعمة",
+    "Foods": "الأطعمة",
+    "Food": "طعام",
+    "NewFood": "طعام جديد",
+    "EditFood": "تعديل الطعام",
+    "DisplayName:ServingSize": "حجم الحصة",
+    "DisplayName:ServingUnit": "الوحدة",
+    "DisplayName:Calories": "السعرات",
+    "DisplayName:ProteinG": "البروتين (غ)",
+    "DisplayName:CarbsG": "الكربوهيدرات (غ)",
+    "DisplayName:FatG": "الدهون (غ)",
+
     "Role:Coach": "المدرب",
     "Role:Trainee": "المتدرب",
 

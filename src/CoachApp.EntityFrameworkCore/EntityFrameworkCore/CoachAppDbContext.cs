@@ -15,6 +15,7 @@ using Volo.Abp.OpenIddict.EntityFrameworkCore;
 using Volo.Abp.TenantManagement;
 using Volo.Abp.TenantManagement.EntityFrameworkCore;
 using CoachApp.Entites.Exercises;
+using CoachApp.Entites.Foods;
 using CoachApp.Entites.Trainees;
 using CoachApp.Entites.WorkoutLogs;
 using CoachApp.Entites.WorkoutPlans;
@@ -33,6 +34,7 @@ public class CoachAppDbContext :
 
     public DbSet<Trainee> Trainees { get; set; }
     public DbSet<Exercise> Exercises { get; set; }
+    public DbSet<Food> Foods { get; set; }
     public DbSet<WorkoutPlan> WorkoutPlans { get; set; }
     public DbSet<WorkoutDay> WorkoutDays { get; set; }
     public DbSet<WorkoutExercise> WorkoutExercises { get; set; }
