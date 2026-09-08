@@ -76,6 +76,23 @@
     "Enum:Equipment.7": "حبل مقاومة",
     "Enum:Equipment.8": "أخرى",
 
+    "Menu:WorkoutPlans": "خطط التمارين",
+    "WorkoutPlans": "خطط التمارين",
+    "WorkoutPlan": "خطة تمارين",
+    "NewWorkoutPlan": "خطة تمارين جديدة",
+    "EditWorkoutPlan": "تعديل خطة التمارين",
+
+    "DisplayName:TraineeId": "المتدرب",
+    "DisplayName:Sets": "المجموعات",
+    "DisplayName:Reps": "التكرارات",
+    "DisplayName:WeightKg": "الوزن (كغ)",
+    "DisplayName:RestSeconds": "الراحة (ثانية)",
+    "DisplayName:Order": "الترتيب",
+    "DisplayName:Notes": "ملاحظات",
+
+    "TheSelectedTraineeDoesNotExist": "المتدرب المحدد غير موجود.",
+    "OneOrMoreExercisesDoNotExist": "واحد أو أكثر من التمارين المحددة غير موجود.",
+
     "Role:Coach": "المدرب",
     "Role:Trainee": "المتدرب",
 

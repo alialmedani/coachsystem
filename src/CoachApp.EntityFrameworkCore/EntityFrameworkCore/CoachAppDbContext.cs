@@ -16,6 +16,7 @@ using Volo.Abp.TenantManagement;
 using Volo.Abp.TenantManagement.EntityFrameworkCore;
 using CoachApp.Entites.Exercises;
 using CoachApp.Entites.Trainees;
+using CoachApp.Entites.WorkoutPlans;
 
 namespace CoachApp.EntityFrameworkCore;
 
@@ -31,6 +32,9 @@ public class CoachAppDbContext :
 
     public DbSet<Trainee> Trainees { get; set; }
     public DbSet<Exercise> Exercises { get; set; }
+    public DbSet<WorkoutPlan> WorkoutPlans { get; set; }
+    public DbSet<WorkoutDay> WorkoutDays { get; set; }
+    public DbSet<WorkoutExercise> WorkoutExercises { get; set; }
 
     #region Entities from the modules
 

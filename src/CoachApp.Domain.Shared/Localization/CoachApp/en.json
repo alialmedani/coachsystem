@@ -72,6 +72,23 @@
     "Enum:Equipment.7": "Resistance Band",
     "Enum:Equipment.8": "Other",
 
+    "Menu:WorkoutPlans": "Workout Plans",
+    "WorkoutPlans": "Workout Plans",
+    "WorkoutPlan": "Workout Plan",
+    "NewWorkoutPlan": "New Workout Plan",
+    "EditWorkoutPlan": "Edit Workout Plan",
+
+    "DisplayName:TraineeId": "Trainee",
+    "DisplayName:Sets": "Sets",
+    "DisplayName:Reps": "Reps",
+    "DisplayName:WeightKg": "Weight (kg)",
+    "DisplayName:RestSeconds": "Rest (sec)",
+    "DisplayName:Order": "Order",
+    "DisplayName:Notes": "Notes",
+
+    "TheSelectedTraineeDoesNotExist": "The selected trainee does not exist.",
+    "OneOrMoreExercisesDoNotExist": "One or more selected exercises do not exist.",
+
     "Role:Coach": "Coach",
     "Role:Trainee": "Trainee",
 
