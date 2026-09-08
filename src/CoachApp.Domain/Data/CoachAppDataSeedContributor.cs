@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using CoachApp.MultiTenancy;
+using Microsoft.Extensions.Configuration;
 using Volo.Abp;
 using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Data;
@@ -31,6 +32,7 @@ public class CoachAppDataSeedContributor : IDataSeedContributor, ITransientDepen
     private readonly ITenantManager _tenantManager;
     private readonly ITenantRepository _tenantRepository;
     private readonly IGuidGenerator _guidGenerator;
+    private readonly IConfiguration _configuration;
 
     public CoachAppDataSeedContributor(
         IdentityRoleManager roleManager,
@@ -39,7 +41,8 @@ public class CoachAppDataSeedContributor : IDataSeedContributor, ITransientDepen
         ICurrentTenant currentTenant,
         ITenantManager tenantManager,
         ITenantRepository tenantRepository,
-        IGuidGenerator guidGenerator)
+        IGuidGenerator guidGenerator,
+        IConfiguration configuration)
     {
         _roleManager = roleManager;
         _permissionManager = permissionManager;
@@ -48,6 +51,7 @@ public class CoachAppDataSeedContributor : IDataSeedContributor, ITransientDepen
         _tenantManager = tenantManager;
         _tenantRepository = tenantRepository;
         _guidGenerator = guidGenerator;
+        _configuration = configuration;
     }
 
     public async Task SeedAsync(DataSeedContext context)
@@ -55,9 +59,12 @@ public class CoachAppDataSeedContributor : IDataSeedContributor, ITransientDepen
         await EnsureRoleWithPermissionsAsync(CoachAppRoles.Coach, CoachPermissionPrefix);
         await EnsureRoleWithPermissionsAsync(CoachAppRoles.Trainee, TraineePermissionPrefix);
 
-        // Provision a demo coach tenant from the host context so tenant-per-coach
-        // is testable out of the box; the tenant's auto-seeded admin acts as the coach.
-        if (context.TenantId == null && MultiTenancyConsts.IsEnabled)
+        // Provision a demo coach tenant (dev only) so tenant-per-coach is testable out
+        // of the box; the tenant's auto-seeded admin acts as the coach. Gated behind a
+        // config flag that defaults OFF, so production never seeds the demo tenant.
+        if (context.TenantId == null
+            && MultiTenancyConsts.IsEnabled
+            && _configuration.GetValue<bool>("CoachApp:SeedDemoTenant"))
         {
             await EnsureDemoTenantAsync();
         }
