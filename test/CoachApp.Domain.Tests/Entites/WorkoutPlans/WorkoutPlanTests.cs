@@ -85,6 +85,26 @@ public class WorkoutPlanTests
     }
 
     [Fact]
+    public void Should_Add_Day_With_ScheduledDay()
+    {
+        var plan = WorkoutPlan.Create(Guid.NewGuid(), Guid.NewGuid(), "Plan");
+
+        var day = plan.AddDay(Guid.NewGuid(), "Day 1 - Push", 1, DayOfWeek.Monday);
+
+        day.ScheduledDay.ShouldBe(DayOfWeek.Monday);
+    }
+
+    [Fact]
+    public void Should_Default_ScheduledDay_To_Null()
+    {
+        var plan = WorkoutPlan.Create(Guid.NewGuid(), Guid.NewGuid(), "Plan");
+
+        var day = plan.AddDay(Guid.NewGuid(), "Day 1", 1);
+
+        day.ScheduledDay.ShouldBeNull();
+    }
+
+    [Fact]
     public void Should_Clear_All_Days()
     {
         var plan = WorkoutPlan.Create(Guid.NewGuid(), Guid.NewGuid(), "Plan");

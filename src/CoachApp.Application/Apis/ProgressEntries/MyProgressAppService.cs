@@ -4,30 +4,24 @@ using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using CoachApp.Entites.ProgressEntries;
-using CoachApp.Entites.Trainees;
 using CoachApp.Permissions;
 using Microsoft.AspNetCore.Authorization;
-using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
-using Volo.Abp.Users;
 
 namespace CoachApp.Apis.ProgressEntries;
 
 /// <summary>Trainee-facing: the signed-in trainee logs and reads their own progress.</summary>
 [Authorize(CoachAppPermissions.Trainee.MyProgress.Default)]
-public class MyProgressAppService : CoachAppAppService, IMyProgressAppService
+public class MyProgressAppService : MyTraineeAppServiceBase, IMyProgressAppService
 {
     private readonly IRepository<ProgressEntry, Guid> _progressRepository;
-    private readonly IRepository<Trainee, Guid> _traineeRepository;
 
     public MyProgressAppService(
-        IRepository<ProgressEntry, Guid> progressRepository,
-        IRepository<Trainee, Guid> traineeRepository)
+        IRepository<ProgressEntry, Guid> progressRepository)
     {
         _progressRepository = progressRepository;
-        _traineeRepository = traineeRepository;
     }
 
     [Authorize(CoachAppPermissions.Trainee.MyProgress.Create)]
@@ -82,17 +76,5 @@ public class MyProgressAppService : CoachAppAppService, IMyProgressAppService
         }
 
         await _progressRepository.DeleteAsync(entry, autoSave: true);
-    }
-
-    private async Task<Guid> GetCurrentTraineeIdAsync()
-    {
-        var userId = CurrentUser.GetId();
-        var trainee = await _traineeRepository.FirstOrDefaultAsync(x => x.UserId == userId);
-        if (trainee == null)
-        {
-            throw new EntityNotFoundException(typeof(Trainee), userId);
-        }
-
-        return trainee.Id;
     }
 }

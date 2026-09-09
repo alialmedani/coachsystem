@@ -25,10 +25,12 @@ public class CoachAppPermissionDefinitionProvider : PermissionDefinitionProvider
         // ── Trainee (self-service) ────────────────────────────────────────────
         group.AddPermission(CoachAppPermissions.Trainee.MyProfile.Default, L("Permission:Trainee.MyProfile"));
         group.AddPermission(CoachAppPermissions.Trainee.MyDashboard.Default, L("Permission:Trainee.MyDashboard"));
+        group.AddPermission(CoachAppPermissions.Trainee.MyToday.Default, L("Permission:Trainee.MyToday"));
         group.AddPermission(CoachAppPermissions.Trainee.MyWorkoutPlans.Default, L("Permission:Trainee.MyWorkoutPlans"));
 
         var workoutLogs = group.AddPermission(CoachAppPermissions.Trainee.WorkoutLogs.Default, L("Permission:Trainee.WorkoutLogs"));
         workoutLogs.AddChild(CoachAppPermissions.Trainee.WorkoutLogs.Create, L("Permission:Trainee.WorkoutLogs.Create"));
+        workoutLogs.AddChild(CoachAppPermissions.Trainee.WorkoutLogs.Update, L("Permission:Trainee.WorkoutLogs.Update"));
 
         group.AddPermission(CoachAppPermissions.Trainee.MyNutritionPlans.Default, L("Permission:Trainee.MyNutritionPlans"));
 

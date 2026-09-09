@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -10,6 +11,8 @@ public class CreateUpdateWorkoutDayDto
     public string Name { get; set; } = string.Empty;
 
     public int Order { get; set; }
+
+    public DayOfWeek? ScheduledDay { get; set; }
 
     public List<CreateUpdateWorkoutExerciseDto> Exercises { get; set; } = new();
 }

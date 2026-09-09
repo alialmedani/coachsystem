@@ -19,4 +19,12 @@ public class WorkoutLogEntryDto : EntityDto<Guid>
     public decimal? WeightKg { get; set; }
 
     public string? Notes { get; set; }
+
+    /// <summary>What the plan prescribed for this exercise (snapshotted when logged from a plan);
+    /// null for manually created logs.</summary>
+    public int? PrescribedSets { get; set; }
+
+    public string? PrescribedReps { get; set; }
+
+    public decimal? PrescribedWeightKg { get; set; }
 }

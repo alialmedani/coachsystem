@@ -17,6 +17,12 @@ public class WorkoutDay : Entity<Guid>
 
     public virtual int Order { get; set; }
 
+    /// <summary>
+    /// The weekday this session is scheduled on (drives the trainee "Today" view). When null the
+    /// day is unscheduled and never surfaces as "today"; a weekday with no scheduled day is a rest day.
+    /// </summary>
+    public virtual DayOfWeek? ScheduledDay { get; set; }
+
     public virtual ICollection<WorkoutExercise> Exercises { get; protected set; }
 
     protected WorkoutDay()
@@ -24,12 +30,13 @@ public class WorkoutDay : Entity<Guid>
         Exercises = new List<WorkoutExercise>();
     }
 
-    public WorkoutDay(Guid id, Guid workoutPlanId, string name, int order)
+    public WorkoutDay(Guid id, Guid workoutPlanId, string name, int order, DayOfWeek? scheduledDay = null)
         : base(id)
     {
         WorkoutPlanId = workoutPlanId;
         Name = Check.NotNullOrWhiteSpace(name, nameof(name), WorkoutPlanConsts.MaxDayNameLength);
         Order = order;
+        ScheduledDay = scheduledDay;
         Exercises = new List<WorkoutExercise>();
     }
 

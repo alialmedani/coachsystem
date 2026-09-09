@@ -134,7 +134,7 @@ public class WorkoutPlanAppService : CoachAppAppService, IWorkoutPlanAppService
     {
         foreach (var dayDto in input.Days.OrderBy(d => d.Order))
         {
-            var day = plan.AddDay(GuidGenerator.Create(), dayDto.Name, dayDto.Order);
+            var day = plan.AddDay(GuidGenerator.Create(), dayDto.Name, dayDto.Order, dayDto.ScheduledDay);
             foreach (var exDto in dayDto.Exercises.OrderBy(e => e.Order))
             {
                 day.AddExercise(

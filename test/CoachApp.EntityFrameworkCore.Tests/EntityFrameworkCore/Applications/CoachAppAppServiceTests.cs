@@ -2,8 +2,10 @@ using CoachApp.Apis.Exercises;
 using CoachApp.Apis.Foods;
 using CoachApp.Apis.NutritionPlans;
 using CoachApp.Apis.ProgressEntries;
+using CoachApp.Apis.Today;
 using CoachApp.Apis.TraineeNotes;
 using CoachApp.Apis.Trainees;
+using CoachApp.Apis.WorkoutLogs;
 using CoachApp.Apis.WorkoutPlans;
 using Xunit;
 
@@ -48,5 +50,15 @@ public class EfCoreProgressEntryAppServiceTests : ProgressEntryAppServiceTests<C
 
 [Collection(CoachAppTestConsts.CollectionDefinitionName)]
 public class EfCoreTraineeNoteAppServiceTests : TraineeNoteAppServiceTests<CoachAppEntityFrameworkCoreTestModule>
+{
+}
+
+[Collection(CoachAppTestConsts.CollectionDefinitionName)]
+public class EfCoreMyWorkoutLogAppServiceTests : MyWorkoutLogAppServiceTests<CoachAppEntityFrameworkCoreTestModule>
+{
+}
+
+[Collection(CoachAppTestConsts.CollectionDefinitionName)]
+public class EfCoreMyTodayAppServiceTests : MyTodayAppServiceTests<CoachAppEntityFrameworkCoreTestModule>
 {
 }

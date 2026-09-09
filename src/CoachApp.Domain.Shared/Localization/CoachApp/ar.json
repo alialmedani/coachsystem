@@ -76,6 +76,14 @@
     "Enum:Equipment.7": "حبل مقاومة",
     "Enum:Equipment.8": "أخرى",
 
+    "Enum:DayOfWeek.0": "الأحد",
+    "Enum:DayOfWeek.1": "الاثنين",
+    "Enum:DayOfWeek.2": "الثلاثاء",
+    "Enum:DayOfWeek.3": "الأربعاء",
+    "Enum:DayOfWeek.4": "الخميس",
+    "Enum:DayOfWeek.5": "الجمعة",
+    "Enum:DayOfWeek.6": "السبت",
+
     "Menu:WorkoutPlans": "خطط التمارين",
     "WorkoutPlans": "خطط التمارين",
     "WorkoutPlan": "خطة تمارين",
@@ -86,6 +94,9 @@
     "WorkoutPlanTemplates": "قوالب التمارين",
     "WorkoutPlanTemplate": "قالب تمارين",
 
+    "Menu:Today": "اليوم",
+    "Today": "اليوم",
+
     "DisplayName:TraineeId": "المتدرب",
     "DisplayName:Sets": "المجموعات",
     "DisplayName:Reps": "التكرارات",
@@ -93,6 +104,10 @@
     "DisplayName:RestSeconds": "الراحة (ثانية)",
     "DisplayName:Order": "الترتيب",
     "DisplayName:Notes": "ملاحظات",
+    "DisplayName:ScheduledDay": "اليوم المجدول",
+    "DisplayName:PrescribedSets": "المجموعات المقررة",
+    "DisplayName:PrescribedReps": "التكرارات المقررة",
+    "DisplayName:PrescribedWeightKg": "الوزن المقرر (كغ)",
 
     "TheSelectedTraineeDoesNotExist": "المتدرب المحدد غير موجود.",
     "OneOrMoreExercisesDoNotExist": "واحد أو أكثر من التمارين المحددة غير موجود.",
@@ -197,9 +212,11 @@
     "Permission:Coach.Notes.Delete": "حذف ملاحظة",
     "Permission:Trainee.MyProfile": "ملفي الشخصي",
     "Permission:Trainee.MyDashboard": "لوحة معلوماتي",
+    "Permission:Trainee.MyToday": "يومي",
     "Permission:Trainee.MyWorkoutPlans": "خطط تماريني",
     "Permission:Trainee.WorkoutLogs": "سجلات التمارين",
     "Permission:Trainee.WorkoutLogs.Create": "تسجيل تمرين",
+    "Permission:Trainee.WorkoutLogs.Update": "تعديل سجل تمرين",
     "Permission:Trainee.MyNutritionPlans": "خططي الغذائية",
     "Permission:Trainee.NutritionLogs": "سجلات التغذية",
     "Permission:Trainee.NutritionLogs.Create": "تسجيل التغذية",

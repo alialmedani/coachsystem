@@ -72,6 +72,14 @@
     "Enum:Equipment.7": "Resistance Band",
     "Enum:Equipment.8": "Other",
 
+    "Enum:DayOfWeek.0": "Sunday",
+    "Enum:DayOfWeek.1": "Monday",
+    "Enum:DayOfWeek.2": "Tuesday",
+    "Enum:DayOfWeek.3": "Wednesday",
+    "Enum:DayOfWeek.4": "Thursday",
+    "Enum:DayOfWeek.5": "Friday",
+    "Enum:DayOfWeek.6": "Saturday",
+
     "Menu:WorkoutPlans": "Workout Plans",
     "WorkoutPlans": "Workout Plans",
     "WorkoutPlan": "Workout Plan",
@@ -82,6 +90,9 @@
     "WorkoutPlanTemplates": "Workout Templates",
     "WorkoutPlanTemplate": "Workout Template",
 
+    "Menu:Today": "Today",
+    "Today": "Today",
+
     "DisplayName:TraineeId": "Trainee",
     "DisplayName:Sets": "Sets",
     "DisplayName:Reps": "Reps",
@@ -89,6 +100,10 @@
     "DisplayName:RestSeconds": "Rest (sec)",
     "DisplayName:Order": "Order",
     "DisplayName:Notes": "Notes",
+    "DisplayName:ScheduledDay": "Scheduled Day",
+    "DisplayName:PrescribedSets": "Prescribed Sets",
+    "DisplayName:PrescribedReps": "Prescribed Reps",
+    "DisplayName:PrescribedWeightKg": "Prescribed Weight (kg)",
 
     "TheSelectedTraineeDoesNotExist": "The selected trainee does not exist.",
     "OneOrMoreExercisesDoNotExist": "One or more selected exercises do not exist.",
@@ -193,9 +208,11 @@
     "Permission:Coach.Notes.Delete": "Delete note",
     "Permission:Trainee.MyProfile": "My profile",
     "Permission:Trainee.MyDashboard": "My dashboard",
+    "Permission:Trainee.MyToday": "My today",
     "Permission:Trainee.MyWorkoutPlans": "My workout plans",
     "Permission:Trainee.WorkoutLogs": "Workout logs",
     "Permission:Trainee.WorkoutLogs.Create": "Log a workout",
+    "Permission:Trainee.WorkoutLogs.Update": "Edit a workout log",
     "Permission:Trainee.MyNutritionPlans": "My nutrition plans",
     "Permission:Trainee.NutritionLogs": "Nutrition logs",
     "Permission:Trainee.NutritionLogs.Create": "Log nutrition",

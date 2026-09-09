@@ -58,4 +58,47 @@ public class WorkoutLogTests
         Should.Throw<ArgumentException>(() =>
             WorkoutLog.Create(Guid.NewGuid(), Guid.NewGuid(), DateTime.Now, notes: tooLong));
     }
+
+    [Fact]
+    public void Should_Add_Entry_With_Prescribed_Values()
+    {
+        var log = WorkoutLog.Create(Guid.NewGuid(), Guid.NewGuid(), DateTime.Now);
+
+        var entry = log.AddEntry(
+            Guid.NewGuid(), Guid.NewGuid(), 1, 4, "8", 62.5m, "felt strong",
+            prescribedSets: 3, prescribedReps: "8-12", prescribedWeightKg: 60m);
+
+        // Actuals.
+        entry.Sets.ShouldBe(4);
+        entry.Reps.ShouldBe("8");
+        entry.WeightKg.ShouldBe(62.5m);
+        // Prescribed snapshot kept separately.
+        entry.PrescribedSets.ShouldBe(3);
+        entry.PrescribedReps.ShouldBe("8-12");
+        entry.PrescribedWeightKg.ShouldBe(60m);
+    }
+
+    [Fact]
+    public void Should_Leave_Prescribed_Null_For_Basic_AddEntry()
+    {
+        var log = WorkoutLog.Create(Guid.NewGuid(), Guid.NewGuid(), DateTime.Now);
+
+        var entry = log.AddEntry(Guid.NewGuid(), Guid.NewGuid(), 1, 5, "5", 100m, "PR");
+
+        entry.PrescribedSets.ShouldBeNull();
+        entry.PrescribedReps.ShouldBeNull();
+        entry.PrescribedWeightKg.ShouldBeNull();
+    }
+
+    [Fact]
+    public void Should_Clear_All_Entries()
+    {
+        var log = WorkoutLog.Create(Guid.NewGuid(), Guid.NewGuid(), DateTime.Now);
+        log.AddEntry(Guid.NewGuid(), Guid.NewGuid(), 1, 3);
+        log.AddEntry(Guid.NewGuid(), Guid.NewGuid(), 2, 3);
+
+        log.ClearEntries();
+
+        log.Entries.ShouldBeEmpty();
+    }
 }

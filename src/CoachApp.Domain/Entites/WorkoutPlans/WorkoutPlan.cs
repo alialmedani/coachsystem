@@ -50,9 +50,9 @@ public class WorkoutPlan : FullAuditedAggregateRoot<Guid>, IMultiTenant
         };
     }
 
-    public WorkoutDay AddDay(Guid id, string name, int order)
+    public WorkoutDay AddDay(Guid id, string name, int order, DayOfWeek? scheduledDay = null)
     {
-        var day = new WorkoutDay(id, Id, name, order);
+        var day = new WorkoutDay(id, Id, name, order, scheduledDay);
         Days.Add(day);
         return day;
     }
