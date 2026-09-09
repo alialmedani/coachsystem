@@ -19,6 +19,7 @@ public static class CoachAppPermissions
             public const string Create = Default + ".Create";
             public const string Update = Default + ".Update";
             public const string Delete = Default + ".Delete";
+            public const string ResetPassword = Default + ".ResetPassword";
         }
 
         public static class Exercises
@@ -132,6 +133,7 @@ public static class CoachAppPermissions
         {
             public const string Default = GroupName + ".Trainee.NutritionLogs";
             public const string Create = Default + ".Create";
+            public const string Update = Default + ".Update";
         }
 
         public static class MyProgress

@@ -95,7 +95,9 @@ public class MyTodayAppService : MyTraineeAppServiceBase, IMyTodayAppService
             await EnrichExerciseNamesAsync(result.ScheduledWorkoutDays);
         }
 
-        result.IsRestDay = result.ScheduledWorkoutDays.Count == 0;
+        // A rest day only applies when the trainee HAS an active plan but nothing is scheduled today;
+        // with no active plan there is no program at all (HasActiveWorkoutPlan already conveys that).
+        result.IsRestDay = result.HasActiveWorkoutPlan && result.ScheduledWorkoutDays.Count == 0;
 
         // Most recent workout log for the date (multiple logs per day are allowed — D5).
         var logQuery = (await _workoutLogRepository.GetQueryableAsync())

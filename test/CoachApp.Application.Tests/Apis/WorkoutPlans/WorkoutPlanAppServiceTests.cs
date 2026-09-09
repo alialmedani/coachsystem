@@ -72,12 +72,13 @@ public abstract class WorkoutPlanAppServiceTests<TStartupModule> : CoachAppApiTe
     [Fact]
     public async Task Should_Throw_When_Trainee_Does_Not_Exist()
     {
-        await Should.ThrowAsync<BusinessException>(() =>
+        var ex = await Should.ThrowAsync<BusinessException>(() =>
             _planAppService.CreateAsync(new CreateUpdateWorkoutPlanDto
             {
                 TraineeId = Guid.NewGuid(),
                 Name = "Orphan Plan"
             }));
+        ex.Code.ShouldBe(CoachAppDomainErrorCodes.TraineeNotFound);
     }
 
     [Fact]
@@ -85,7 +86,7 @@ public abstract class WorkoutPlanAppServiceTests<TStartupModule> : CoachAppApiTe
     {
         var trainee = await CreateTraineeAsync();
 
-        await Should.ThrowAsync<BusinessException>(() =>
+        var ex = await Should.ThrowAsync<BusinessException>(() =>
             _planAppService.CreateAsync(new CreateUpdateWorkoutPlanDto
             {
                 TraineeId = trainee.Id,
@@ -103,6 +104,7 @@ public abstract class WorkoutPlanAppServiceTests<TStartupModule> : CoachAppApiTe
                     }
                 }
             }));
+        ex.Code.ShouldBe(CoachAppDomainErrorCodes.ExercisesNotFound);
     }
 
     [Fact]

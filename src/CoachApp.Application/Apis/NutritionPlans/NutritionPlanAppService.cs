@@ -166,7 +166,7 @@ public class NutritionPlanAppService : CoachAppAppService, INutritionPlanAppServ
         var trainee = await _traineeRepository.FindAsync(traineeId);
         if (trainee == null)
         {
-            throw new UserFriendlyException(L["TheSelectedTraineeDoesNotExist"]);
+            throw new BusinessException(CoachAppDomainErrorCodes.TraineeNotFound);
         }
     }
 
@@ -181,7 +181,7 @@ public class NutritionPlanAppService : CoachAppAppService, INutritionPlanAppServ
         var found = await _foodRepository.CountAsync(x => ids.Contains(x.Id));
         if (found != ids.Count)
         {
-            throw new UserFriendlyException(L["OneOrMoreFoodsDoNotExist"]);
+            throw new BusinessException(CoachAppDomainErrorCodes.FoodsNotFound);
         }
     }
 

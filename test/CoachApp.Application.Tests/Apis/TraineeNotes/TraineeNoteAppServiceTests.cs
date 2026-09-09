@@ -43,13 +43,14 @@ public abstract class TraineeNoteAppServiceTests<TStartupModule> : CoachAppApiTe
     [Fact]
     public async Task Should_Throw_When_Trainee_Does_Not_Exist()
     {
-        await Should.ThrowAsync<BusinessException>(() =>
+        var ex = await Should.ThrowAsync<BusinessException>(() =>
             _noteAppService.CreateAsync(new CreateUpdateTraineeNoteDto
             {
                 TraineeId = Guid.NewGuid(),
                 Date = DateTime.Now,
                 Text = "Orphan note"
             }));
+        ex.Code.ShouldBe(CoachAppDomainErrorCodes.TraineeNotFound);
     }
 
     [Fact]

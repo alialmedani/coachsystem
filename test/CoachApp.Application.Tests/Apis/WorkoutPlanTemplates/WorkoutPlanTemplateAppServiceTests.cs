@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CoachApp.Apis;
+using CoachApp.Entites.Today;
 using CoachApp.Entites.WorkoutPlans;
 using CoachApp.Entites.WorkoutPlanTemplates;
 using Shouldly;
@@ -64,7 +65,7 @@ public abstract class WorkoutPlanTemplateAppServiceTests<TStartupModule> : Coach
     [Fact]
     public async Task Should_Throw_When_Referencing_Unknown_Exercise()
     {
-        await Should.ThrowAsync<BusinessException>(() =>
+        var ex = await Should.ThrowAsync<BusinessException>(() =>
             _templateAppService.CreateAsync(new CreateUpdateWorkoutPlanTemplateDto
             {
                 Name = "Bad",
@@ -81,6 +82,7 @@ public abstract class WorkoutPlanTemplateAppServiceTests<TStartupModule> : Coach
                     }
                 }
             }));
+        ex.Code.ShouldBe(CoachAppDomainErrorCodes.ExercisesNotFound);
     }
 
     [Fact]
@@ -188,8 +190,9 @@ public abstract class WorkoutPlanTemplateAppServiceTests<TStartupModule> : Coach
     {
         var template = await _templateAppService.CreateAsync(new CreateUpdateWorkoutPlanTemplateDto { Name = "T" });
 
-        await Should.ThrowAsync<BusinessException>(() =>
+        var ex = await Should.ThrowAsync<BusinessException>(() =>
             _templateAppService.CloneToTraineeAsync(template.Id, new CloneWorkoutTemplateDto { TraineeId = Guid.NewGuid() }));
+        ex.Code.ShouldBe(CoachAppDomainErrorCodes.TraineeNotFound);
     }
 
     [Fact]
@@ -201,5 +204,103 @@ public abstract class WorkoutPlanTemplateAppServiceTests<TStartupModule> : Coach
 
         var result = await _templateAppService.GetListAsync(new GetWorkoutPlanTemplateListInput());
         result.Items.ShouldNotContain(x => x.Id == created.Id);
+    }
+
+    [Fact]
+    public async Task Should_Persist_Template_Day_ScheduledDay()
+    {
+        var template = await _templateAppService.CreateAsync(new CreateUpdateWorkoutPlanTemplateDto
+        {
+            Name = "Weekly Split",
+            Days = new List<CreateUpdateWorkoutTemplateDayDto>
+            {
+                new() { Name = "Scheduled", Order = 1, ScheduledDay = DayOfWeek.Monday },
+                new() { Name = "Unscheduled", Order = 2 }
+            }
+        });
+
+        template.Days.Single(d => d.Name == "Scheduled").ScheduledDay.ShouldBe(DayOfWeek.Monday);
+        template.Days.Single(d => d.Name == "Unscheduled").ScheduledDay.ShouldBeNull(); // null round-trips (backward compatible)
+    }
+
+    [Fact]
+    public async Task Should_Carry_ScheduledDay_Through_SaveAsTemplate_And_Clone()
+    {
+        var trainee = await CreateTraineeAsync();
+        var ex = await CreateExerciseAsync("Row");
+
+        // A source plan with a day scheduled on Wednesday.
+        var plan = await _planAppService.CreateAsync(new CreateUpdateWorkoutPlanDto
+        {
+            TraineeId = trainee.Id,
+            Name = "Source",
+            IsActive = true,
+            Days = new List<CreateUpdateWorkoutDayDto>
+            {
+                new()
+                {
+                    Name = "Pull",
+                    Order = 1,
+                    ScheduledDay = DayOfWeek.Wednesday,
+                    Exercises = new List<CreateUpdateWorkoutExerciseDto> { new() { ExerciseId = ex.Id, Order = 1, Sets = 3 } }
+                }
+            }
+        });
+
+        // Save the plan as a template — the weekday must survive.
+        var template = await _templateAppService.SaveAsTemplateAsync(new SaveWorkoutPlanAsTemplateDto
+        {
+            WorkoutPlanId = plan.Id,
+            Name = "From Plan"
+        });
+        template.Days.Single().ScheduledDay.ShouldBe(DayOfWeek.Wednesday);
+
+        // Clone the template back onto a trainee — the weekday must reach the new WorkoutDay.
+        var cloned = await _templateAppService.CloneToTraineeAsync(template.Id, new CloneWorkoutTemplateDto
+        {
+            TraineeId = trainee.Id
+        });
+        cloned.Days.Single().ScheduledDay.ShouldBe(DayOfWeek.Wednesday);
+    }
+
+    [Fact]
+    public async Task Should_Surface_Cloned_Template_Day_In_Today()
+    {
+        var sampleDate = new DateTime(2026, 3, 2);
+
+        var trainee = await CreateTraineeAsync();
+        var ex = await CreateExerciseAsync("Squat");
+
+        // Template with a day scheduled on the sample date's weekday.
+        var template = await _templateAppService.CreateAsync(new CreateUpdateWorkoutPlanTemplateDto
+        {
+            Name = "Weekly",
+            Days = new List<CreateUpdateWorkoutTemplateDayDto>
+            {
+                new()
+                {
+                    Name = "Today's Day",
+                    Order = 1,
+                    ScheduledDay = sampleDate.DayOfWeek,
+                    Exercises = new List<CreateUpdateWorkoutTemplateExerciseDto> { new() { ExerciseId = ex.Id, Order = 1, Sets = 5, Reps = "5" } }
+                }
+            }
+        });
+
+        // Clone onto the trainee and activate it (clones land inactive).
+        var plan = await _templateAppService.CloneToTraineeAsync(template.Id, new CloneWorkoutTemplateDto { TraineeId = trainee.Id });
+        await _planAppService.SetActiveAsync(plan.Id);
+
+        // Today must surface the cloned scheduled day (previously it was always a rest day).
+        var today = GetRequiredService<IMyTodayAppService>();
+        MyTodayDto result;
+        using (ChangeToTrainee(trainee))
+        {
+            result = await today.GetAsync(new GetMyTodayInput { Date = sampleDate });
+        }
+
+        result.IsRestDay.ShouldBeFalse();
+        result.ScheduledWorkoutDays.Count.ShouldBe(1);
+        result.ScheduledWorkoutDays.Single().Name.ShouldBe("Today's Day");
     }
 }

@@ -22,6 +22,13 @@ public class NutritionPlanTemplate : FullAuditedAggregateRoot<Guid>, IMultiTenan
 
     public virtual string? Description { get; set; }
 
+    // Optional coach-set daily targets, carried onto the cloned NutritionPlan. When null, the
+    // plan's computed meal totals are treated as the target (see the dashboard).
+    public virtual decimal? TargetCalories { get; set; }
+    public virtual decimal? TargetProteinG { get; set; }
+    public virtual decimal? TargetCarbsG { get; set; }
+    public virtual decimal? TargetFatG { get; set; }
+
     public virtual ICollection<NutritionTemplateMeal> Meals { get; protected set; }
 
     protected NutritionPlanTemplate()

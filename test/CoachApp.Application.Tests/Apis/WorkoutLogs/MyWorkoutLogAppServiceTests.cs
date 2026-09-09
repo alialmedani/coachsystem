@@ -152,10 +152,7 @@ public abstract class MyWorkoutLogAppServiceTests<TStartupModule> : CoachAppApiT
                         Sets = 3,
                         Reps = "8",
                         WeightKg = 65m,           // actual: heavier than prescribed
-                        Notes = "hit it",
-                        PrescribedSets = entry.PrescribedSets,
-                        PrescribedReps = entry.PrescribedReps,
-                        PrescribedWeightKg = entry.PrescribedWeightKg
+                        Notes = "hit it"
                     }
                 }
             });
@@ -191,5 +188,49 @@ public abstract class MyWorkoutLogAppServiceTests<TStartupModule> : CoachAppApiT
             await Should.ThrowAsync<EntityNotFoundException>(() =>
                 _myLog.UpdateAsync(logId, new UpdateWorkoutLogDto { Date = new DateTime(2026, 3, 2) }));
         }
+    }
+
+    [Fact]
+    public async Task Update_Should_Not_Let_Trainee_Change_Prescribed_Snapshot()
+    {
+        var (trainee, _, dayId) = await SeedTraineeWithPlanDayAsync();
+
+        WorkoutLogDto updated;
+        using (ChangeToTrainee(trainee))
+        {
+            var log = await _myLog.CreateFromDayAsync(new CreateWorkoutLogFromDayDto
+            {
+                WorkoutDayId = dayId,
+                Date = new DateTime(2026, 3, 2)
+            });
+            var entry = log.Entries.Single();
+
+            // The update DTO no longer exposes prescribed fields, so the trainee can only change
+            // actuals — there is no channel to overwrite the server-owned prescribed snapshot.
+            updated = await _myLog.UpdateAsync(log.Id, new UpdateWorkoutLogDto
+            {
+                Date = new DateTime(2026, 3, 2),
+                Entries = new List<UpdateWorkoutLogEntryDto>
+                {
+                    new()
+                    {
+                        ExerciseId = entry.ExerciseId,
+                        Order = 1,
+                        Sets = 10,
+                        Reps = "1",
+                        WeightKg = 200m
+                    }
+                }
+            });
+        }
+
+        var updatedEntry = updated.Entries.Single();
+        // Actuals changed…
+        updatedEntry.Sets.ShouldBe(10);
+        updatedEntry.WeightKg.ShouldBe(200m);
+        // …but the prescribed snapshot is unchanged from the plan (3 / 8-12 / 60).
+        updatedEntry.PrescribedSets.ShouldBe(3);
+        updatedEntry.PrescribedReps.ShouldBe("8-12");
+        updatedEntry.PrescribedWeightKg.ShouldBe(60m);
     }
 }

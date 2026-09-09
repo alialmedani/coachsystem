@@ -4,9 +4,9 @@ using System.ComponentModel.DataAnnotations;
 namespace CoachApp.Entites.WorkoutLogs;
 
 /// <summary>
-/// One entry when editing a logged session. Actual Sets/Reps/WeightKg are what the trainee
-/// did; the Prescribed* fields carry the plan snapshot back so it is preserved across the
-/// clear-and-rebuild update (informational only — the server does not authorize on them).
+/// One entry when editing a logged session. Actual Sets/Reps/WeightKg are what the trainee did.
+/// The prescribed plan snapshot is server-owned and is NOT accepted from the client here — it is
+/// preserved across the clear-and-rebuild update by the app service.
 /// </summary>
 public class UpdateWorkoutLogEntryDto
 {
@@ -26,12 +26,4 @@ public class UpdateWorkoutLogEntryDto
 
     [StringLength(WorkoutLogConsts.MaxNotesLength)]
     public string? Notes { get; set; }
-
-    public int? PrescribedSets { get; set; }
-
-    [StringLength(WorkoutLogConsts.MaxRepsLength)]
-    public string? PrescribedReps { get; set; }
-
-    [Range(0, 1000)]
-    public decimal? PrescribedWeightKg { get; set; }
 }

@@ -85,7 +85,7 @@ public class TraineeNoteAppService : CoachAppAppService, ITraineeNoteAppService
         var trainee = await _traineeRepository.FindAsync(traineeId);
         if (trainee == null)
         {
-            throw new UserFriendlyException(L["TheSelectedTraineeDoesNotExist"]);
+            throw new BusinessException(CoachAppDomainErrorCodes.TraineeNotFound);
         }
     }
 }

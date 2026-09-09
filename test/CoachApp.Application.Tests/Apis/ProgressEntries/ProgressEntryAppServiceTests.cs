@@ -45,13 +45,14 @@ public abstract class ProgressEntryAppServiceTests<TStartupModule> : CoachAppApi
     [Fact]
     public async Task Should_Throw_When_Trainee_Does_Not_Exist()
     {
-        await Should.ThrowAsync<BusinessException>(() =>
+        var ex = await Should.ThrowAsync<BusinessException>(() =>
             _progressAppService.CreateAsync(new CreateUpdateProgressEntryDto
             {
                 TraineeId = Guid.NewGuid(),
                 Date = DateTime.Now,
                 WeightKg = 70m
             }));
+        ex.Code.ShouldBe(CoachAppDomainErrorCodes.TraineeNotFound);
     }
 
     [Fact]

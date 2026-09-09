@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
+using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
 
@@ -181,6 +182,27 @@ public class TraineeAppService : CoachAppAppService, ITraineeAppService
         {
             CheckIdentityErrors(await _userManager.DeleteAsync(user));
         }
+    }
+
+    [Authorize(CoachAppPermissions.Coach.Trainees.ResetPassword)]
+    public virtual async Task ResetPasswordAsync(Guid id, ResetTraineePasswordDto input)
+    {
+        // The route {id} identifies the trainee; the tenant filter scopes this lookup to the coach's
+        // tenant, so a trainee/user from another tenant cannot be targeted and nothing is trusted from
+        // the request body. A missing/foreign trainee → the repository's EntityNotFoundException (404).
+        var trainee = await _traineeRepository.GetAsync(id);
+
+        var user = await _userManager.FindByIdAsync(trainee.UserId.ToString());
+        if (user == null)
+        {
+            throw new EntityNotFoundException(typeof(IdentityUser), trainee.UserId);
+        }
+
+        // ABP-idiomatic admin reset: drop the current password and set the new one. The new value is
+        // validated by the standard Identity password policy; failures surface via CheckIdentityErrors.
+        // Both run in the app service's unit of work, so a validation failure leaves the login untouched.
+        CheckIdentityErrors(await _userManager.RemovePasswordAsync(user));
+        CheckIdentityErrors(await _userManager.AddPasswordAsync(user, input.NewPassword));
     }
 
     /// <summary>

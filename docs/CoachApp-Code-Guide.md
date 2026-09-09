@@ -347,12 +347,13 @@ Wired in `CoachAppHttpApiHostModule` and seeded by `OpenIddictDataSeedContributo
 
 ### 5.11 Error handling & localization
 
-- There are **no numeric domain error codes** in use. `CoachAppDomainErrorCodes` is an empty
-  placeholder (the `"CoachApp:00001"` pattern is reserved but unused).
+- Business-rule violations carry a **stable machine-readable error code**. `CoachAppDomainErrorCodes`
+  defines the `"CoachApp:0000N"` codes (`TraineeNotFound`, `ExercisesNotFound`, `FoodsNotFound`,
+  `ExerciseInUse`, `FoodInUse`).
 - Failures surface two ways:
-  - `UserFriendlyException(L["SomeKey"])` for business validation (e.g.
-    `"TheSelectedTraineeDoesNotExist"`, `"OneOrMoreExercisesDoNotExist"`,
-    `"OneOrMoreFoodsDoNotExist"`).
+  - `BusinessException(CoachAppDomainErrorCodes.X)` for business validation. The code is exposed in
+    the API `error.code`; the message is resolved from the localization key matching the code
+    (e.g. `"CoachApp:00001"`).
   - `EntityNotFoundException(typeof(T), id)` for "not found" **and** for the trainee-side ownership
     guard (so a trainee poking at someone else's row gets a clean 404).
 - Every user-facing string (labels, permission names, error messages, role names) has a key in

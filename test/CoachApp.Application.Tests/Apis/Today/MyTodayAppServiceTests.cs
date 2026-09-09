@@ -209,7 +209,7 @@ public abstract class MyTodayAppServiceTests<TStartupModule> : CoachAppApiTestBa
 
         result.HasActiveWorkoutPlan.ShouldBeFalse();
         result.WorkoutPlanId.ShouldBeNull();
-        result.IsRestDay.ShouldBeTrue();
+        result.IsRestDay.ShouldBeFalse(); // no active plan ⇒ not a rest day (no program at all)
         result.HasActiveNutritionPlan.ShouldBeFalse();
         result.NutritionPlan.ShouldBeNull();
         result.NutritionAdherence.ShouldNotBeNull();

@@ -123,7 +123,7 @@ public class FoodAppService : CoachAppAppService, IFoodAppService
             || await AsyncExecuter.AnyAsync(templateQuery.Where(t => t.Meals.Any(m => m.Items.Any(i => i.FoodId == id))))
             || await AsyncExecuter.AnyAsync(logQuery.Where(l => l.Entries.Any(e => e.FoodId == id))))
         {
-            throw new UserFriendlyException(L["FoodInUse"]);
+            throw new BusinessException(CoachAppDomainErrorCodes.FoodInUse);
         }
 
         await _foodRepository.DeleteAsync(id);

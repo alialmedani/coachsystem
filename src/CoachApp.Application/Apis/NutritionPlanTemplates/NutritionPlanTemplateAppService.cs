@@ -73,6 +73,7 @@ public class NutritionPlanTemplateAppService : CoachAppAppService, INutritionPla
         await CheckFoodsExistAsync(GetFoodIds(input));
 
         var template = NutritionPlanTemplate.Create(GuidGenerator.Create(), input.Name, input.Description, CurrentTenant.Id);
+        ApplyTargets(template, input);
         BuildMeals(template, input);
 
         await _templateRepository.InsertAsync(template, autoSave: true);
@@ -88,6 +89,7 @@ public class NutritionPlanTemplateAppService : CoachAppAppService, INutritionPla
 
         template.Name = input.Name;
         template.Description = input.Description;
+        ApplyTargets(template, input);
 
         // Full replace of the meal/item structure.
         template.ClearMeals();
@@ -118,6 +120,11 @@ public class NutritionPlanTemplateAppService : CoachAppAppService, INutritionPla
             input.Description ?? template.Description,
             CurrentTenant.Id);
 
+        plan.TargetCalories = template.TargetCalories;
+        plan.TargetProteinG = template.TargetProteinG;
+        plan.TargetCarbsG = template.TargetCarbsG;
+        plan.TargetFatG = template.TargetFatG;
+
         foreach (var meal in template.Meals.OrderBy(m => m.Order))
         {
             var planMeal = plan.AddMeal(GuidGenerator.Create(), meal.Name, meal.Order);
@@ -142,6 +149,11 @@ public class NutritionPlanTemplateAppService : CoachAppAppService, INutritionPla
 
         var template = NutritionPlanTemplate.Create(GuidGenerator.Create(), input.Name, input.Description, CurrentTenant.Id);
 
+        template.TargetCalories = plan.TargetCalories;
+        template.TargetProteinG = plan.TargetProteinG;
+        template.TargetCarbsG = plan.TargetCarbsG;
+        template.TargetFatG = plan.TargetFatG;
+
         foreach (var meal in plan.Meals.OrderBy(m => m.Order))
         {
             var templateMeal = template.AddMeal(GuidGenerator.Create(), meal.Name, meal.Order);
@@ -156,6 +168,14 @@ public class NutritionPlanTemplateAppService : CoachAppAppService, INutritionPla
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
+
+    private static void ApplyTargets(NutritionPlanTemplate template, CreateUpdateNutritionPlanTemplateDto input)
+    {
+        template.TargetCalories = input.TargetCalories;
+        template.TargetProteinG = input.TargetProteinG;
+        template.TargetCarbsG = input.TargetCarbsG;
+        template.TargetFatG = input.TargetFatG;
+    }
 
     private void BuildMeals(NutritionPlanTemplate template, CreateUpdateNutritionPlanTemplateDto input)
     {
@@ -177,7 +197,7 @@ public class NutritionPlanTemplateAppService : CoachAppAppService, INutritionPla
         var trainee = await _traineeRepository.FindAsync(traineeId);
         if (trainee == null)
         {
-            throw new UserFriendlyException(L["TheSelectedTraineeDoesNotExist"]);
+            throw new BusinessException(CoachAppDomainErrorCodes.TraineeNotFound);
         }
     }
 
@@ -192,7 +212,7 @@ public class NutritionPlanTemplateAppService : CoachAppAppService, INutritionPla
         var found = await _foodRepository.CountAsync(x => ids.Contains(x.Id));
         if (found != ids.Count)
         {
-            throw new UserFriendlyException(L["OneOrMoreFoodsDoNotExist"]);
+            throw new BusinessException(CoachAppDomainErrorCodes.FoodsNotFound);
         }
     }
 
