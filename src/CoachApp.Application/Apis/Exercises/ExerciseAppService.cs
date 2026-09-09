@@ -125,7 +125,7 @@ public class ExerciseAppService : CoachAppAppService, IExerciseAppService
             || await AsyncExecuter.AnyAsync(templateQuery.Where(t => t.Days.Any(d => d.Exercises.Any(e => e.ExerciseId == id))))
             || await AsyncExecuter.AnyAsync(logQuery.Where(l => l.Entries.Any(e => e.ExerciseId == id))))
         {
-            throw new UserFriendlyException(L["ExerciseInUse"]);
+            throw new BusinessException(CoachAppDomainErrorCodes.ExerciseInUse);
         }
 
         await _exerciseRepository.DeleteAsync(id);

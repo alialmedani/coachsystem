@@ -56,4 +56,7 @@ public class NutritionLog : FullAuditedAggregateRoot<Guid>, IMultiTenant
         Entries.Add(entry);
         return entry;
     }
+
+    /// <summary>Removes all entries — used for a full edit/replace.</summary>
+    public void ClearEntries() => Entries.Clear();
 }

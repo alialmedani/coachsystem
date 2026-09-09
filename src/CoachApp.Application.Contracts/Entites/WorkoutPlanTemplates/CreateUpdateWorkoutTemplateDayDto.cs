@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using CoachApp.Entites.WorkoutPlans;
@@ -11,6 +12,8 @@ public class CreateUpdateWorkoutTemplateDayDto
     public string Name { get; set; } = string.Empty;
 
     public int Order { get; set; }
+
+    public DayOfWeek? ScheduledDay { get; set; }
 
     public List<CreateUpdateWorkoutTemplateExerciseDto> Exercises { get; set; } = new();
 }

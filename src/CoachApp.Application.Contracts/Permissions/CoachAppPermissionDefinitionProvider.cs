@@ -11,7 +11,8 @@ public class CoachAppPermissionDefinitionProvider : PermissionDefinitionProvider
         var group = context.AddGroup(CoachAppPermissions.GroupName, L("Permission:CoachApp"));
 
         // ── Coach (management) ────────────────────────────────────────────────
-        AddCrud(group, CoachAppPermissions.Coach.Trainees.Default, "Coach.Trainees");
+        var trainees = AddCrud(group, CoachAppPermissions.Coach.Trainees.Default, "Coach.Trainees");
+        trainees.AddChild(CoachAppPermissions.Coach.Trainees.ResetPassword, L("Permission:Coach.Trainees.ResetPassword"));
         AddCrud(group, CoachAppPermissions.Coach.Exercises.Default, "Coach.Exercises");
         AddCrud(group, CoachAppPermissions.Coach.WorkoutPlans.Default, "Coach.WorkoutPlans");
         AddCrud(group, CoachAppPermissions.Coach.WorkoutPlanTemplates.Default, "Coach.WorkoutPlanTemplates");
@@ -36,6 +37,7 @@ public class CoachAppPermissionDefinitionProvider : PermissionDefinitionProvider
 
         var nutritionLogs = group.AddPermission(CoachAppPermissions.Trainee.NutritionLogs.Default, L("Permission:Trainee.NutritionLogs"));
         nutritionLogs.AddChild(CoachAppPermissions.Trainee.NutritionLogs.Create, L("Permission:Trainee.NutritionLogs.Create"));
+        nutritionLogs.AddChild(CoachAppPermissions.Trainee.NutritionLogs.Update, L("Permission:Trainee.NutritionLogs.Update"));
 
         var myProgress = group.AddPermission(CoachAppPermissions.Trainee.MyProgress.Default, L("Permission:Trainee.MyProgress"));
         myProgress.AddChild(CoachAppPermissions.Trainee.MyProgress.Create, L("Permission:Trainee.MyProgress.Create"));
@@ -43,12 +45,13 @@ public class CoachAppPermissionDefinitionProvider : PermissionDefinitionProvider
         group.AddPermission(CoachAppPermissions.Trainee.MyNotes.Default, L("Permission:Trainee.MyNotes"));
     }
 
-    private static void AddCrud(PermissionGroupDefinition group, string defaultName, string localizationKey)
+    private static PermissionDefinition AddCrud(PermissionGroupDefinition group, string defaultName, string localizationKey)
     {
         var permission = group.AddPermission(defaultName, L($"Permission:{localizationKey}"));
         permission.AddChild(defaultName + ".Create", L($"Permission:{localizationKey}.Create"));
         permission.AddChild(defaultName + ".Update", L($"Permission:{localizationKey}.Update"));
         permission.AddChild(defaultName + ".Delete", L($"Permission:{localizationKey}.Delete"));
+        return permission;
     }
 
     private static LocalizableString L(string name)

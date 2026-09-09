@@ -5,13 +5,11 @@ using System.ComponentModel.DataAnnotations;
 namespace CoachApp.Entites.NutritionLogs;
 
 /// <summary>
-/// A day the trainee logs for themselves (the trainee is the current user, so there
-/// is no TraineeId here).
+/// Edits a logged nutrition day the trainee owns. Full replace of the entry list, mirroring the
+/// workout-log update convention. The plan reference recorded at create time is left unchanged.
 /// </summary>
-public class CreateNutritionLogDto
+public class UpdateNutritionLogDto
 {
-    public Guid? NutritionPlanId { get; set; }
-
     [Required]
     public DateTime Date { get; set; }
 

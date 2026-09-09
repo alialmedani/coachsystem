@@ -60,7 +60,7 @@ public abstract class NutritionPlanTemplateAppServiceTests<TStartupModule> : Coa
     [Fact]
     public async Task Should_Throw_When_Referencing_Unknown_Food()
     {
-        await Should.ThrowAsync<BusinessException>(() =>
+        var ex = await Should.ThrowAsync<BusinessException>(() =>
             _templateAppService.CreateAsync(new CreateUpdateNutritionPlanTemplateDto
             {
                 Name = "Bad",
@@ -74,6 +74,7 @@ public abstract class NutritionPlanTemplateAppServiceTests<TStartupModule> : Coa
                     }
                 }
             }));
+        ex.Code.ShouldBe(CoachAppDomainErrorCodes.FoodsNotFound);
     }
 
     [Fact]
@@ -136,7 +137,70 @@ public abstract class NutritionPlanTemplateAppServiceTests<TStartupModule> : Coa
     {
         var template = await _templateAppService.CreateAsync(new CreateUpdateNutritionPlanTemplateDto { Name = "T" });
 
-        await Should.ThrowAsync<BusinessException>(() =>
+        var ex = await Should.ThrowAsync<BusinessException>(() =>
             _templateAppService.CloneToTraineeAsync(template.Id, new CloneNutritionTemplateDto { TraineeId = Guid.NewGuid() }));
+        ex.Code.ShouldBe(CoachAppDomainErrorCodes.TraineeNotFound);
+    }
+
+    [Fact]
+    public async Task Should_Persist_Template_Macro_Targets()
+    {
+        var template = await _templateAppService.CreateAsync(new CreateUpdateNutritionPlanTemplateDto
+        {
+            Name = "Cut",
+            TargetCalories = 2000m,
+            TargetProteinG = 180m,
+            TargetCarbsG = 150m,
+            TargetFatG = 60m
+        });
+
+        template.TargetCalories.ShouldBe(2000m);
+        template.TargetProteinG.ShouldBe(180m);
+        template.TargetCarbsG.ShouldBe(150m);
+        template.TargetFatG.ShouldBe(60m);
+    }
+
+    [Fact]
+    public async Task Should_Carry_Targets_Through_SaveAsTemplate_And_Clone()
+    {
+        var trainee = await CreateTraineeAsync();
+        var food = await CreateFoodAsync("Rice");
+
+        // A source plan carrying explicit coach-set macro targets.
+        var plan = await _planAppService.CreateAsync(new CreateUpdateNutritionPlanDto
+        {
+            TraineeId = trainee.Id,
+            Name = "Source",
+            IsActive = true,
+            TargetCalories = 2500m,
+            TargetProteinG = 200m,
+            TargetCarbsG = 250m,
+            TargetFatG = 70m,
+            Meals = new List<CreateUpdateMealDto>
+            {
+                new() { Name = "Lunch", Order = 1, Items = new List<CreateUpdateMealItemDto> { new() { FoodId = food.Id, Order = 1, Quantity = 1m } } }
+            }
+        });
+
+        // Save as a template — all four targets must survive.
+        var template = await _templateAppService.SaveAsTemplateAsync(new SaveNutritionPlanAsTemplateDto
+        {
+            NutritionPlanId = plan.Id,
+            Name = "From Plan"
+        });
+        template.TargetCalories.ShouldBe(2500m);
+        template.TargetProteinG.ShouldBe(200m);
+        template.TargetCarbsG.ShouldBe(250m);
+        template.TargetFatG.ShouldBe(70m);
+
+        // Clone back onto a trainee — all four targets must reach the new NutritionPlan.
+        var cloned = await _templateAppService.CloneToTraineeAsync(template.Id, new CloneNutritionTemplateDto
+        {
+            TraineeId = trainee.Id
+        });
+        cloned.TargetCalories.ShouldBe(2500m);
+        cloned.TargetProteinG.ShouldBe(200m);
+        cloned.TargetCarbsG.ShouldBe(250m);
+        cloned.TargetFatG.ShouldBe(70m);
     }
 }

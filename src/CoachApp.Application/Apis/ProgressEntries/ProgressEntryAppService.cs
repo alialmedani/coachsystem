@@ -98,7 +98,7 @@ public class ProgressEntryAppService : CoachAppAppService, IProgressEntryAppServ
         var trainee = await _traineeRepository.FindAsync(traineeId);
         if (trainee == null)
         {
-            throw new UserFriendlyException(L["TheSelectedTraineeDoesNotExist"]);
+            throw new BusinessException(CoachAppDomainErrorCodes.TraineeNotFound);
         }
     }
 }

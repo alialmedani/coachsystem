@@ -1,5 +1,6 @@
 using CoachApp.Apis.Exercises;
 using CoachApp.Apis.Foods;
+using CoachApp.Apis.NutritionLogs;
 using CoachApp.Apis.NutritionPlans;
 using CoachApp.Apis.ProgressEntries;
 using CoachApp.Apis.Today;
@@ -60,5 +61,35 @@ public class EfCoreMyWorkoutLogAppServiceTests : MyWorkoutLogAppServiceTests<Coa
 
 [Collection(CoachAppTestConsts.CollectionDefinitionName)]
 public class EfCoreMyTodayAppServiceTests : MyTodayAppServiceTests<CoachAppEntityFrameworkCoreTestModule>
+{
+}
+
+[Collection(CoachAppTestConsts.CollectionDefinitionName)]
+public class EfCoreMyNutritionLogAppServiceTests : MyNutritionLogAppServiceTests<CoachAppEntityFrameworkCoreTestModule>
+{
+}
+
+[Collection(CoachAppTestConsts.CollectionDefinitionName)]
+public class EfCoreMyProgressAppServiceTests : MyProgressAppServiceTests<CoachAppEntityFrameworkCoreTestModule>
+{
+}
+
+[Collection(CoachAppTestConsts.CollectionDefinitionName)]
+public class EfCoreMyNutritionPlanAppServiceTests : MyNutritionPlanAppServiceTests<CoachAppEntityFrameworkCoreTestModule>
+{
+}
+
+[Collection(CoachAppTestConsts.CollectionDefinitionName)]
+public class EfCoreMyWorkoutPlanAppServiceTests : MyWorkoutPlanAppServiceTests<CoachAppEntityFrameworkCoreTestModule>
+{
+}
+
+[Collection(CoachAppTestConsts.CollectionDefinitionName)]
+public class EfCoreMyNoteAppServiceTests : MyNoteAppServiceTests<CoachAppEntityFrameworkCoreTestModule>
+{
+}
+
+[Collection(CoachAppTestConsts.CollectionDefinitionName)]
+public class EfCoreMyProfileAppServiceTests : MyProfileAppServiceTests<CoachAppEntityFrameworkCoreTestModule>
 {
 }

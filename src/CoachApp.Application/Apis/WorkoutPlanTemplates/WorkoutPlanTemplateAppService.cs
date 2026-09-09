@@ -119,7 +119,7 @@ public class WorkoutPlanTemplateAppService : CoachAppAppService, IWorkoutPlanTem
 
         foreach (var day in template.Days.OrderBy(d => d.Order))
         {
-            var planDay = plan.AddDay(GuidGenerator.Create(), day.Name, day.Order);
+            var planDay = plan.AddDay(GuidGenerator.Create(), day.Name, day.Order, day.ScheduledDay);
             foreach (var ex in day.Exercises.OrderBy(e => e.Order))
             {
                 planDay.AddExercise(GuidGenerator.Create(), ex.ExerciseId, ex.Order, ex.Sets, ex.Reps, ex.WeightKg, ex.RestSeconds, ex.Notes);
@@ -140,7 +140,7 @@ public class WorkoutPlanTemplateAppService : CoachAppAppService, IWorkoutPlanTem
 
         foreach (var day in plan.Days.OrderBy(d => d.Order))
         {
-            var templateDay = template.AddDay(GuidGenerator.Create(), day.Name, day.Order);
+            var templateDay = template.AddDay(GuidGenerator.Create(), day.Name, day.Order, day.ScheduledDay);
             foreach (var ex in day.Exercises.OrderBy(e => e.Order))
             {
                 templateDay.AddExercise(GuidGenerator.Create(), ex.ExerciseId, ex.Order, ex.Sets, ex.Reps, ex.WeightKg, ex.RestSeconds, ex.Notes);
@@ -157,7 +157,7 @@ public class WorkoutPlanTemplateAppService : CoachAppAppService, IWorkoutPlanTem
     {
         foreach (var dayDto in input.Days.OrderBy(d => d.Order))
         {
-            var day = template.AddDay(GuidGenerator.Create(), dayDto.Name, dayDto.Order);
+            var day = template.AddDay(GuidGenerator.Create(), dayDto.Name, dayDto.Order, dayDto.ScheduledDay);
             foreach (var exDto in dayDto.Exercises.OrderBy(e => e.Order))
             {
                 day.AddExercise(
@@ -181,7 +181,7 @@ public class WorkoutPlanTemplateAppService : CoachAppAppService, IWorkoutPlanTem
         var trainee = await _traineeRepository.FindAsync(traineeId);
         if (trainee == null)
         {
-            throw new UserFriendlyException(L["TheSelectedTraineeDoesNotExist"]);
+            throw new BusinessException(CoachAppDomainErrorCodes.TraineeNotFound);
         }
     }
 
@@ -196,7 +196,7 @@ public class WorkoutPlanTemplateAppService : CoachAppAppService, IWorkoutPlanTem
         var found = await _exerciseRepository.CountAsync(x => ids.Contains(x.Id));
         if (found != ids.Count)
         {
-            throw new UserFriendlyException(L["OneOrMoreExercisesDoNotExist"]);
+            throw new BusinessException(CoachAppDomainErrorCodes.ExercisesNotFound);
         }
     }
 

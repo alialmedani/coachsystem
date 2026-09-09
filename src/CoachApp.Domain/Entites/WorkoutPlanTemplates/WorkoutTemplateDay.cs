@@ -18,6 +18,12 @@ public class WorkoutTemplateDay : Entity<Guid>
 
     public virtual int Order { get; set; }
 
+    /// <summary>
+    /// The weekday this session is scheduled on. Carried onto the cloned <see cref="WorkoutPlans.WorkoutDay"/>
+    /// so the trainee "Today" view works for template-based plans. Null = unscheduled.
+    /// </summary>
+    public virtual DayOfWeek? ScheduledDay { get; set; }
+
     public virtual ICollection<WorkoutTemplateExercise> Exercises { get; protected set; }
 
     protected WorkoutTemplateDay()
@@ -25,12 +31,13 @@ public class WorkoutTemplateDay : Entity<Guid>
         Exercises = new List<WorkoutTemplateExercise>();
     }
 
-    public WorkoutTemplateDay(Guid id, Guid workoutPlanTemplateId, string name, int order)
+    public WorkoutTemplateDay(Guid id, Guid workoutPlanTemplateId, string name, int order, DayOfWeek? scheduledDay = null)
         : base(id)
     {
         WorkoutPlanTemplateId = workoutPlanTemplateId;
         Name = Check.NotNullOrWhiteSpace(name, nameof(name), WorkoutPlanConsts.MaxDayNameLength);
         Order = order;
+        ScheduledDay = scheduledDay;
         Exercises = new List<WorkoutTemplateExercise>();
     }
 

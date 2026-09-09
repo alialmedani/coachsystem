@@ -169,7 +169,7 @@ public class WorkoutPlanAppService : CoachAppAppService, IWorkoutPlanAppService
         var trainee = await _traineeRepository.FindAsync(traineeId);
         if (trainee == null)
         {
-            throw new UserFriendlyException(L["TheSelectedTraineeDoesNotExist"]);
+            throw new BusinessException(CoachAppDomainErrorCodes.TraineeNotFound);
         }
     }
 
@@ -184,7 +184,7 @@ public class WorkoutPlanAppService : CoachAppAppService, IWorkoutPlanAppService
         var found = await _exerciseRepository.CountAsync(x => ids.Contains(x.Id));
         if (found != ids.Count)
         {
-            throw new UserFriendlyException(L["OneOrMoreExercisesDoNotExist"]);
+            throw new BusinessException(CoachAppDomainErrorCodes.ExercisesNotFound);
         }
     }
 

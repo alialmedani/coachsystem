@@ -16,6 +16,8 @@ public class WorkoutTemplateDayConfiguration : IEntityTypeConfiguration<WorkoutT
 
         b.Property(x => x.Name).IsRequired().HasMaxLength(WorkoutPlanConsts.MaxDayNameLength);
 
+        b.Property(x => x.ScheduledDay).HasConversion<byte?>();
+
         b.HasMany(x => x.Exercises)
             .WithOne()
             .HasForeignKey(x => x.WorkoutTemplateDayId)

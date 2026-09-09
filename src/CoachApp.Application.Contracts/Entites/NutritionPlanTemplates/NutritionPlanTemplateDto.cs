@@ -10,6 +10,12 @@ public class NutritionPlanTemplateDto : FullAuditedEntityDto<Guid>
 
     public string? Description { get; set; }
 
+    // Optional coach-set daily targets (null when not set); carried to the cloned plan.
+    public decimal? TargetCalories { get; set; }
+    public decimal? TargetProteinG { get; set; }
+    public decimal? TargetCarbsG { get; set; }
+    public decimal? TargetFatG { get; set; }
+
     public List<NutritionTemplateMealDto> Meals { get; set; } = new();
 
     // Plan totals, summed from all meal items (enriched in the app service).

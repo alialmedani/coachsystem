@@ -25,3 +25,8 @@ public class EfCoreNutritionPlanTemplateAppServiceTests : NutritionPlanTemplateA
 public class EfCoreTraineeDashboardAppServiceTests : TraineeDashboardAppServiceTests<CoachAppEntityFrameworkCoreTestModule>
 {
 }
+
+[Collection(CoachAppTestConsts.CollectionDefinitionName)]
+public class EfCoreMyDashboardAppServiceTests : MyDashboardAppServiceTests<CoachAppEntityFrameworkCoreTestModule>
+{
+}

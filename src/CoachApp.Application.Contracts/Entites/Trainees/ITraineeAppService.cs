@@ -18,4 +18,7 @@ public interface ITraineeAppService : IApplicationService
     Task<TraineeDto> UpdateAsync(Guid id, UpdateTraineeDto input);
 
     Task DeleteAsync(Guid id);
+
+    /// <summary>Resets the trainee's login password (coach-only). The user name is unchanged.</summary>
+    Task ResetPasswordAsync(Guid id, ResetTraineePasswordDto input);
 }

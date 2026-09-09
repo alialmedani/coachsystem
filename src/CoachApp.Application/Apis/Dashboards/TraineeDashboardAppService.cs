@@ -80,7 +80,7 @@ public class TraineeDashboardAppService : CoachAppAppService, ITraineeDashboardA
         var trainee = await _traineeRepository.FindAsync(traineeId);
         if (trainee == null)
         {
-            throw new UserFriendlyException(L["TheSelectedTraineeDoesNotExist"]);
+            throw new BusinessException(CoachAppDomainErrorCodes.TraineeNotFound);
         }
     }
 }

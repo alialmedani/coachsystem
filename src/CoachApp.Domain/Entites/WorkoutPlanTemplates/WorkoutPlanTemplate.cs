@@ -45,9 +45,9 @@ public class WorkoutPlanTemplate : FullAuditedAggregateRoot<Guid>, IMultiTenant
         };
     }
 
-    public WorkoutTemplateDay AddDay(Guid id, string name, int order)
+    public WorkoutTemplateDay AddDay(Guid id, string name, int order, DayOfWeek? scheduledDay = null)
     {
-        var day = new WorkoutTemplateDay(id, Id, name, order);
+        var day = new WorkoutTemplateDay(id, Id, name, order, scheduledDay);
         Days.Add(day);
         return day;
     }

@@ -7,4 +7,7 @@ namespace CoachApp.Entites.NutritionLogs;
 public static class NutritionLogConsts
 {
     public const int MaxNotesLength = 512;
+
+    /// <summary>Upper bound on entries per logged day (matches WorkoutLogConsts.MaxEntries).</summary>
+    public const int MaxEntries = 100;
 }

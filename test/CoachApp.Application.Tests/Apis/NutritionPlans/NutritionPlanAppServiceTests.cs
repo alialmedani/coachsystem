@@ -76,12 +76,13 @@ public abstract class NutritionPlanAppServiceTests<TStartupModule> : CoachAppApi
     [Fact]
     public async Task Should_Throw_When_Trainee_Does_Not_Exist()
     {
-        await Should.ThrowAsync<BusinessException>(() =>
+        var ex = await Should.ThrowAsync<BusinessException>(() =>
             _planAppService.CreateAsync(new CreateUpdateNutritionPlanDto
             {
                 TraineeId = Guid.NewGuid(),
                 Name = "Orphan"
             }));
+        ex.Code.ShouldBe(CoachAppDomainErrorCodes.TraineeNotFound);
     }
 
     [Fact]
@@ -89,7 +90,7 @@ public abstract class NutritionPlanAppServiceTests<TStartupModule> : CoachAppApi
     {
         var trainee = await CreateTraineeAsync();
 
-        await Should.ThrowAsync<BusinessException>(() =>
+        var ex = await Should.ThrowAsync<BusinessException>(() =>
             _planAppService.CreateAsync(new CreateUpdateNutritionPlanDto
             {
                 TraineeId = trainee.Id,
@@ -107,6 +108,7 @@ public abstract class NutritionPlanAppServiceTests<TStartupModule> : CoachAppApi
                     }
                 }
             }));
+        ex.Code.ShouldBe(CoachAppDomainErrorCodes.FoodsNotFound);
     }
 
     [Fact]

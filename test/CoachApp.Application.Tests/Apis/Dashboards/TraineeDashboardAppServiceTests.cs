@@ -173,12 +173,13 @@ public abstract class TraineeDashboardAppServiceTests<TStartupModule> : CoachApp
     [Fact]
     public async Task Should_Throw_For_Unknown_Trainee()
     {
-        await Should.ThrowAsync<BusinessException>(() =>
+        var ex = await Should.ThrowAsync<BusinessException>(() =>
             _dashboard.GetNutritionAdherenceAsync(new GetNutritionAdherenceInput
             {
                 TraineeId = Guid.NewGuid(),
                 Date = new DateTime(2026, 3, 2)
             }));
+        ex.Code.ShouldBe(CoachAppDomainErrorCodes.TraineeNotFound);
     }
 
     private Task SeedNutritionLogAsync(Guid traineeId, DateTime date, Guid foodId, decimal quantity)

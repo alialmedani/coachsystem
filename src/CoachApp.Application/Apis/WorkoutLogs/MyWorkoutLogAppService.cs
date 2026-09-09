@@ -137,6 +137,16 @@ public class MyWorkoutLogAppService : MyTraineeAppServiceBase, IMyWorkoutLogAppS
         var log = await GetOwnedWithDetailsAsync(id, traineeId);
         await CheckExercisesExistAsync(input.Entries.Select(e => e.ExerciseId));
 
+        // The prescribed snapshot is server-owned: capture it before the rebuild (keyed by the
+        // entry's stable identity, ExerciseId + Order) and restore it, so client input can never
+        // overwrite it. Entries with no prior match (newly added) carry no prescribed values.
+        var prescribed = new Dictionary<(Guid ExerciseId, int Order), (int? Sets, string? Reps, decimal? WeightKg)>();
+        foreach (var existing in log.Entries)
+        {
+            prescribed[(existing.ExerciseId, existing.Order)] =
+                (existing.PrescribedSets, existing.PrescribedReps, existing.PrescribedWeightKg);
+        }
+
         log.Date = input.Date;
         log.Notes = input.Notes;
 
@@ -144,6 +154,7 @@ public class MyWorkoutLogAppService : MyTraineeAppServiceBase, IMyWorkoutLogAppS
         log.ClearEntries();
         foreach (var entry in input.Entries.OrderBy(e => e.Order))
         {
+            prescribed.TryGetValue((entry.ExerciseId, entry.Order), out var snapshot);
             log.AddEntry(
                 GuidGenerator.Create(),
                 entry.ExerciseId,
@@ -152,9 +163,9 @@ public class MyWorkoutLogAppService : MyTraineeAppServiceBase, IMyWorkoutLogAppS
                 entry.Reps,
                 entry.WeightKg,
                 entry.Notes,
-                entry.PrescribedSets,
-                entry.PrescribedReps,
-                entry.PrescribedWeightKg);
+                snapshot.Sets,
+                snapshot.Reps,
+                snapshot.WeightKg);
         }
 
         await _logRepository.UpdateAsync(log, autoSave: true);
@@ -191,7 +202,7 @@ public class MyWorkoutLogAppService : MyTraineeAppServiceBase, IMyWorkoutLogAppS
         var found = await _exerciseRepository.CountAsync(x => ids.Contains(x.Id));
         if (found != ids.Count)
         {
-            throw new UserFriendlyException(L["OneOrMoreExercisesDoNotExist"]);
+            throw new BusinessException(CoachAppDomainErrorCodes.ExercisesNotFound);
         }
     }
 
