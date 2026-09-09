@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using CoachApp.Entites.Exercises;
 using CoachApp.Entites.Foods;
@@ -6,6 +8,7 @@ using CoachApp.Entites.Trainees;
 using CoachApp.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
+using Volo.Abp.Security.Claims;
 
 namespace CoachApp.Apis;
 
@@ -18,6 +21,25 @@ public abstract class CoachAppApiTestBase<TStartupModule> : CoachAppApplicationT
     where TStartupModule : IAbpModule
 {
     protected const string ValidPassword = "Test1234!";
+
+    /// <summary>
+    /// Runs subsequent calls as the given trainee — sets <c>CurrentUser</c> to that trainee's
+    /// identity user, so the trainee self-service ("My...") services resolve to this trainee.
+    /// Dispose (via <c>using</c>) to restore the default principal.
+    /// </summary>
+    protected IDisposable ChangeToTrainee(TraineeDto trainee)
+    {
+        var principalAccessor = GetRequiredService<ICurrentPrincipalAccessor>();
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
+            new List<Claim>
+            {
+                new Claim(AbpClaimTypes.UserId, trainee.UserId.ToString()),
+                new Claim(AbpClaimTypes.UserName, trainee.UserName)
+            },
+            authenticationType: "Test"));
+
+        return principalAccessor.Change(principal);
+    }
 
     protected async Task<TraineeDto> CreateTraineeAsync(
         string? firstName = null,

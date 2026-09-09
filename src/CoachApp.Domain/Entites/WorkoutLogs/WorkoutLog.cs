@@ -63,10 +63,18 @@ public class WorkoutLog : FullAuditedAggregateRoot<Guid>, IMultiTenant
         int sets,
         string? reps = null,
         decimal? weightKg = null,
-        string? notes = null)
+        string? notes = null,
+        int? prescribedSets = null,
+        string? prescribedReps = null,
+        decimal? prescribedWeightKg = null)
     {
-        var entry = new WorkoutLogEntry(id, Id, exerciseId, order, sets, reps, weightKg, notes);
+        var entry = new WorkoutLogEntry(
+            id, Id, exerciseId, order, sets, reps, weightKg, notes,
+            prescribedSets, prescribedReps, prescribedWeightKg);
         Entries.Add(entry);
         return entry;
     }
+
+    /// <summary>Removes all entries — used for a full edit/replace of a logged session.</summary>
+    public void ClearEntries() => Entries.Clear();
 }

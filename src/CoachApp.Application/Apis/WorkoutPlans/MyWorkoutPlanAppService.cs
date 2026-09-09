@@ -3,32 +3,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CoachApp.Entites.Exercises;
-using CoachApp.Entites.Trainees;
 using CoachApp.Entites.WorkoutPlans;
 using CoachApp.Permissions;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
-using Volo.Abp.Users;
 
 namespace CoachApp.Apis.WorkoutPlans;
 
 /// <summary>Trainee-facing: the signed-in trainee reads their own workout plans.</summary>
 [Authorize(CoachAppPermissions.Trainee.MyWorkoutPlans.Default)]
-public class MyWorkoutPlanAppService : CoachAppAppService, IMyWorkoutPlanAppService
+public class MyWorkoutPlanAppService : MyTraineeAppServiceBase, IMyWorkoutPlanAppService
 {
     private readonly IRepository<WorkoutPlan, Guid> _planRepository;
     private readonly IRepository<Exercise, Guid> _exerciseRepository;
-    private readonly IRepository<Trainee, Guid> _traineeRepository;
 
     public MyWorkoutPlanAppService(
         IRepository<WorkoutPlan, Guid> planRepository,
-        IRepository<Exercise, Guid> exerciseRepository,
-        IRepository<Trainee, Guid> traineeRepository)
+        IRepository<Exercise, Guid> exerciseRepository)
     {
         _planRepository = planRepository;
         _exerciseRepository = exerciseRepository;
-        _traineeRepository = traineeRepository;
     }
 
     public virtual async Task<List<WorkoutPlanDto>> GetListAsync()
@@ -61,18 +56,6 @@ public class MyWorkoutPlanAppService : CoachAppAppService, IMyWorkoutPlanAppServ
 
         var plan = await _planRepository.GetAsync(active.Id, includeDetails: true);
         return await MapToDetailDtoAsync(plan);
-    }
-
-    private async Task<Guid> GetCurrentTraineeIdAsync()
-    {
-        var userId = CurrentUser.GetId();
-        var trainee = await _traineeRepository.FirstOrDefaultAsync(x => x.UserId == userId);
-        if (trainee == null)
-        {
-            throw new EntityNotFoundException(typeof(Trainee), userId);
-        }
-
-        return trainee.Id;
     }
 
     private async Task<WorkoutPlanDto> MapToDetailDtoAsync(WorkoutPlan plan)

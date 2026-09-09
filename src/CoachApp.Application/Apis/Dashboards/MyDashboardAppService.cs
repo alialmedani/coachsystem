@@ -4,14 +4,11 @@ using CoachApp.Entites.Dashboards;
 using CoachApp.Entites.Foods;
 using CoachApp.Entites.NutritionLogs;
 using CoachApp.Entites.NutritionPlans;
-using CoachApp.Entites.Trainees;
 using CoachApp.Entites.WorkoutLogs;
 using CoachApp.Entites.WorkoutPlans;
 using CoachApp.Permissions;
 using Microsoft.AspNetCore.Authorization;
-using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
-using Volo.Abp.Users;
 
 namespace CoachApp.Apis.Dashboards;
 
@@ -20,29 +17,26 @@ namespace CoachApp.Apis.Dashboards;
 /// the current user (never trusted from the client), so a trainee only ever sees their own numbers.
 /// </summary>
 [Authorize(CoachAppPermissions.Trainee.MyDashboard.Default)]
-public class MyDashboardAppService : CoachAppAppService, IMyDashboardAppService
+public class MyDashboardAppService : MyTraineeAppServiceBase, IMyDashboardAppService
 {
     private readonly IRepository<NutritionLog, Guid> _nutritionLogRepository;
     private readonly IRepository<NutritionPlan, Guid> _nutritionPlanRepository;
     private readonly IRepository<WorkoutLog, Guid> _workoutLogRepository;
     private readonly IRepository<WorkoutPlan, Guid> _workoutPlanRepository;
     private readonly IRepository<Food, Guid> _foodRepository;
-    private readonly IRepository<Trainee, Guid> _traineeRepository;
 
     public MyDashboardAppService(
         IRepository<NutritionLog, Guid> nutritionLogRepository,
         IRepository<NutritionPlan, Guid> nutritionPlanRepository,
         IRepository<WorkoutLog, Guid> workoutLogRepository,
         IRepository<WorkoutPlan, Guid> workoutPlanRepository,
-        IRepository<Food, Guid> foodRepository,
-        IRepository<Trainee, Guid> traineeRepository)
+        IRepository<Food, Guid> foodRepository)
     {
         _nutritionLogRepository = nutritionLogRepository;
         _nutritionPlanRepository = nutritionPlanRepository;
         _workoutLogRepository = workoutLogRepository;
         _workoutPlanRepository = workoutPlanRepository;
         _foodRepository = foodRepository;
-        _traineeRepository = traineeRepository;
     }
 
     public virtual async Task<NutritionAdherenceDto> GetNutritionAdherenceAsync(GetMyNutritionAdherenceInput input)
@@ -79,17 +73,5 @@ public class MyDashboardAppService : CoachAppAppService, IMyDashboardAppService
                 _workoutLogRepository, _workoutPlanRepository,
                 AsyncExecuter)
         };
-    }
-
-    private async Task<Guid> GetCurrentTraineeIdAsync()
-    {
-        var userId = CurrentUser.GetId();
-        var trainee = await _traineeRepository.FirstOrDefaultAsync(x => x.UserId == userId);
-        if (trainee == null)
-        {
-            throw new EntityNotFoundException(typeof(Trainee), userId);
-        }
-
-        return trainee.Id;
     }
 }

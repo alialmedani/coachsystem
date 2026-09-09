@@ -10,9 +10,14 @@ public interface IMyWorkoutLogAppService : IApplicationService
 {
     Task<WorkoutLogDto> CreateAsync(CreateWorkoutLogDto input);
 
+    /// <summary>"Log This Session": creates a log snapshotted from a day of one of the trainee's own plans.</summary>
+    Task<WorkoutLogDto> CreateFromDayAsync(CreateWorkoutLogFromDayDto input);
+
     Task<PagedResultDto<WorkoutLogDto>> GetListAsync(GetMyWorkoutLogListInput input);
 
     Task<WorkoutLogDto> GetAsync(Guid id);
+
+    Task<WorkoutLogDto> UpdateAsync(Guid id, UpdateWorkoutLogDto input);
 
     Task DeleteAsync(Guid id);
 }

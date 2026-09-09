@@ -105,6 +105,12 @@ public static class CoachAppPermissions
             public const string Default = GroupName + ".Trainee.MyDashboard";
         }
 
+        /// <summary>The signed-in trainee's "Today" view (workout + nutrition + status).</summary>
+        public static class MyToday
+        {
+            public const string Default = GroupName + ".Trainee.MyToday";
+        }
+
         public static class MyWorkoutPlans
         {
             public const string Default = GroupName + ".Trainee.MyWorkoutPlans";
@@ -114,6 +120,7 @@ public static class CoachAppPermissions
         {
             public const string Default = GroupName + ".Trainee.WorkoutLogs";
             public const string Create = Default + ".Create";
+            public const string Update = Default + ".Update";
         }
 
         public static class MyNutritionPlans

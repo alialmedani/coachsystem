@@ -10,5 +10,7 @@ public class WorkoutDayDto : EntityDto<Guid>
 
     public int Order { get; set; }
 
+    public DayOfWeek? ScheduledDay { get; set; }
+
     public List<WorkoutExerciseDto> Exercises { get; set; } = new();
 }

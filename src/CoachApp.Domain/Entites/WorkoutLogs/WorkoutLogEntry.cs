@@ -24,6 +24,15 @@ public class WorkoutLogEntry : Entity<Guid>
 
     public virtual string? Notes { get; set; }
 
+    /// <summary>What the plan prescribed for this exercise, snapshotted when the session is logged
+    /// from a plan. Kept separate from the actual Sets/Reps/WeightKg above so the historical record
+    /// survives later edits to the plan, and planned-vs-done can be compared. Null for manual logs.</summary>
+    public virtual int? PrescribedSets { get; set; }
+
+    public virtual string? PrescribedReps { get; set; }
+
+    public virtual decimal? PrescribedWeightKg { get; set; }
+
     protected WorkoutLogEntry()
     {
     }
@@ -36,7 +45,10 @@ public class WorkoutLogEntry : Entity<Guid>
         int sets,
         string? reps = null,
         decimal? weightKg = null,
-        string? notes = null)
+        string? notes = null,
+        int? prescribedSets = null,
+        string? prescribedReps = null,
+        decimal? prescribedWeightKg = null)
         : base(id)
     {
         WorkoutLogId = workoutLogId;
@@ -46,5 +58,8 @@ public class WorkoutLogEntry : Entity<Guid>
         Reps = Check.Length(reps, nameof(reps), WorkoutLogConsts.MaxRepsLength);
         WeightKg = weightKg;
         Notes = Check.Length(notes, nameof(notes), WorkoutLogConsts.MaxNotesLength);
+        PrescribedSets = prescribedSets;
+        PrescribedReps = Check.Length(prescribedReps, nameof(prescribedReps), WorkoutLogConsts.MaxRepsLength);
+        PrescribedWeightKg = prescribedWeightKg;
     }
 }

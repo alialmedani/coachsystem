@@ -20,20 +20,20 @@ namespace CoachApp.Apis.Exercises;
 public class ExerciseAppService : CoachAppAppService, IExerciseAppService
 {
     private readonly IRepository<Exercise, Guid> _exerciseRepository;
-    private readonly IRepository<WorkoutExercise, Guid> _workoutExerciseRepository;
-    private readonly IRepository<WorkoutTemplateExercise, Guid> _templateExerciseRepository;
-    private readonly IRepository<WorkoutLogEntry, Guid> _workoutLogEntryRepository;
+    private readonly IRepository<WorkoutPlan, Guid> _workoutPlanRepository;
+    private readonly IRepository<WorkoutPlanTemplate, Guid> _workoutPlanTemplateRepository;
+    private readonly IRepository<WorkoutLog, Guid> _workoutLogRepository;
 
     public ExerciseAppService(
         IRepository<Exercise, Guid> exerciseRepository,
-        IRepository<WorkoutExercise, Guid> workoutExerciseRepository,
-        IRepository<WorkoutTemplateExercise, Guid> templateExerciseRepository,
-        IRepository<WorkoutLogEntry, Guid> workoutLogEntryRepository)
+        IRepository<WorkoutPlan, Guid> workoutPlanRepository,
+        IRepository<WorkoutPlanTemplate, Guid> workoutPlanTemplateRepository,
+        IRepository<WorkoutLog, Guid> workoutLogRepository)
     {
         _exerciseRepository = exerciseRepository;
-        _workoutExerciseRepository = workoutExerciseRepository;
-        _templateExerciseRepository = templateExerciseRepository;
-        _workoutLogEntryRepository = workoutLogEntryRepository;
+        _workoutPlanRepository = workoutPlanRepository;
+        _workoutPlanTemplateRepository = workoutPlanTemplateRepository;
+        _workoutLogRepository = workoutLogRepository;
     }
 
     public virtual async Task<ExerciseDto> GetAsync(Guid id)
@@ -113,9 +113,17 @@ public class ExerciseAppService : CoachAppAppService, IExerciseAppService
     public virtual async Task DeleteAsync(Guid id)
     {
         // Don't orphan references: block the delete if the exercise is used anywhere.
-        if (await _workoutExerciseRepository.CountAsync(x => x.ExerciseId == id) > 0
-            || await _templateExerciseRepository.CountAsync(x => x.ExerciseId == id) > 0
-            || await _workoutLogEntryRepository.CountAsync(x => x.ExerciseId == id) > 0)
+        // The check runs through the tenant-scoped aggregate roots (WorkoutPlan,
+        // WorkoutPlanTemplate, WorkoutLog), whose queryables are automatically filtered
+        // to the current tenant — so it only ever sees this tenant's references and cannot
+        // count or probe references belonging to another tenant.
+        var planQuery = await _workoutPlanRepository.GetQueryableAsync();
+        var templateQuery = await _workoutPlanTemplateRepository.GetQueryableAsync();
+        var logQuery = await _workoutLogRepository.GetQueryableAsync();
+
+        if (await AsyncExecuter.AnyAsync(planQuery.Where(p => p.Days.Any(d => d.Exercises.Any(e => e.ExerciseId == id))))
+            || await AsyncExecuter.AnyAsync(templateQuery.Where(t => t.Days.Any(d => d.Exercises.Any(e => e.ExerciseId == id))))
+            || await AsyncExecuter.AnyAsync(logQuery.Where(l => l.Entries.Any(e => e.ExerciseId == id))))
         {
             throw new UserFriendlyException(L["ExerciseInUse"]);
         }

@@ -5,33 +5,28 @@ using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using CoachApp.Entites.Foods;
 using CoachApp.Entites.NutritionLogs;
-using CoachApp.Entites.Trainees;
 using CoachApp.Permissions;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
-using Volo.Abp.Users;
 
 namespace CoachApp.Apis.NutritionLogs;
 
 /// <summary>Trainee-facing: the signed-in trainee logs and reads their own nutrition days.</summary>
 [Authorize(CoachAppPermissions.Trainee.NutritionLogs.Default)]
-public class MyNutritionLogAppService : CoachAppAppService, IMyNutritionLogAppService
+public class MyNutritionLogAppService : MyTraineeAppServiceBase, IMyNutritionLogAppService
 {
     private readonly IRepository<NutritionLog, Guid> _logRepository;
     private readonly IRepository<Food, Guid> _foodRepository;
-    private readonly IRepository<Trainee, Guid> _traineeRepository;
 
     public MyNutritionLogAppService(
         IRepository<NutritionLog, Guid> logRepository,
-        IRepository<Food, Guid> foodRepository,
-        IRepository<Trainee, Guid> traineeRepository)
+        IRepository<Food, Guid> foodRepository)
     {
         _logRepository = logRepository;
         _foodRepository = foodRepository;
-        _traineeRepository = traineeRepository;
     }
 
     [Authorize(CoachAppPermissions.Trainee.NutritionLogs.Create)]
@@ -97,18 +92,6 @@ public class MyNutritionLogAppService : CoachAppAppService, IMyNutritionLogAppSe
         }
 
         return log;
-    }
-
-    private async Task<Guid> GetCurrentTraineeIdAsync()
-    {
-        var userId = CurrentUser.GetId();
-        var trainee = await _traineeRepository.FirstOrDefaultAsync(x => x.UserId == userId);
-        if (trainee == null)
-        {
-            throw new EntityNotFoundException(typeof(Trainee), userId);
-        }
-
-        return trainee.Id;
     }
 
     private async Task CheckFoodsExistAsync(IEnumerable<Guid> foodIds)

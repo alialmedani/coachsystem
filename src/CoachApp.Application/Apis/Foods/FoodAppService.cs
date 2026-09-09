@@ -20,20 +20,20 @@ namespace CoachApp.Apis.Foods;
 public class FoodAppService : CoachAppAppService, IFoodAppService
 {
     private readonly IRepository<Food, Guid> _foodRepository;
-    private readonly IRepository<MealItem, Guid> _mealItemRepository;
-    private readonly IRepository<NutritionTemplateItem, Guid> _templateItemRepository;
-    private readonly IRepository<NutritionLogEntry, Guid> _nutritionLogEntryRepository;
+    private readonly IRepository<NutritionPlan, Guid> _nutritionPlanRepository;
+    private readonly IRepository<NutritionPlanTemplate, Guid> _nutritionPlanTemplateRepository;
+    private readonly IRepository<NutritionLog, Guid> _nutritionLogRepository;
 
     public FoodAppService(
         IRepository<Food, Guid> foodRepository,
-        IRepository<MealItem, Guid> mealItemRepository,
-        IRepository<NutritionTemplateItem, Guid> templateItemRepository,
-        IRepository<NutritionLogEntry, Guid> nutritionLogEntryRepository)
+        IRepository<NutritionPlan, Guid> nutritionPlanRepository,
+        IRepository<NutritionPlanTemplate, Guid> nutritionPlanTemplateRepository,
+        IRepository<NutritionLog, Guid> nutritionLogRepository)
     {
         _foodRepository = foodRepository;
-        _mealItemRepository = mealItemRepository;
-        _templateItemRepository = templateItemRepository;
-        _nutritionLogEntryRepository = nutritionLogEntryRepository;
+        _nutritionPlanRepository = nutritionPlanRepository;
+        _nutritionPlanTemplateRepository = nutritionPlanTemplateRepository;
+        _nutritionLogRepository = nutritionLogRepository;
     }
 
     public virtual async Task<FoodDto> GetAsync(Guid id)
@@ -111,9 +111,17 @@ public class FoodAppService : CoachAppAppService, IFoodAppService
     public virtual async Task DeleteAsync(Guid id)
     {
         // Don't orphan references: block the delete if the food is used anywhere.
-        if (await _mealItemRepository.CountAsync(x => x.FoodId == id) > 0
-            || await _templateItemRepository.CountAsync(x => x.FoodId == id) > 0
-            || await _nutritionLogEntryRepository.CountAsync(x => x.FoodId == id) > 0)
+        // The check runs through the tenant-scoped aggregate roots (NutritionPlan,
+        // NutritionPlanTemplate, NutritionLog), whose queryables are automatically filtered
+        // to the current tenant — so it only ever sees this tenant's references and cannot
+        // count or probe references belonging to another tenant.
+        var planQuery = await _nutritionPlanRepository.GetQueryableAsync();
+        var templateQuery = await _nutritionPlanTemplateRepository.GetQueryableAsync();
+        var logQuery = await _nutritionLogRepository.GetQueryableAsync();
+
+        if (await AsyncExecuter.AnyAsync(planQuery.Where(p => p.Meals.Any(m => m.Items.Any(i => i.FoodId == id))))
+            || await AsyncExecuter.AnyAsync(templateQuery.Where(t => t.Meals.Any(m => m.Items.Any(i => i.FoodId == id))))
+            || await AsyncExecuter.AnyAsync(logQuery.Where(l => l.Entries.Any(e => e.FoodId == id))))
         {
             throw new UserFriendlyException(L["FoodInUse"]);
         }

@@ -15,6 +15,8 @@ public class WorkoutDayConfiguration : IEntityTypeConfiguration<WorkoutDay>
 
         b.Property(x => x.Name).IsRequired().HasMaxLength(WorkoutPlanConsts.MaxDayNameLength);
 
+        b.Property(x => x.ScheduledDay).HasConversion<byte?>();
+
         b.HasMany(x => x.Exercises)
             .WithOne()
             .HasForeignKey(x => x.WorkoutDayId)
@@ -22,5 +24,6 @@ public class WorkoutDayConfiguration : IEntityTypeConfiguration<WorkoutDay>
             .OnDelete(DeleteBehavior.Cascade);
 
         b.HasIndex(x => x.WorkoutPlanId);
+        b.HasIndex(x => new { x.WorkoutPlanId, x.ScheduledDay });
     }
 }

@@ -5,15 +5,11 @@ using System.ComponentModel.DataAnnotations;
 namespace CoachApp.Entites.WorkoutLogs;
 
 /// <summary>
-/// A session the trainee logs for themselves (the trainee is the current user, so
-/// there is no TraineeId here).
+/// Edits a logged session the trainee owns (e.g. adjusting the actual sets/reps/weight they
+/// performed). Full replace of the entry list, mirroring the plan clear-and-rebuild convention.
 /// </summary>
-public class CreateWorkoutLogDto
+public class UpdateWorkoutLogDto
 {
-    public Guid? WorkoutPlanId { get; set; }
-
-    public Guid? WorkoutDayId { get; set; }
-
     [Required]
     public DateTime Date { get; set; }
 
@@ -21,5 +17,5 @@ public class CreateWorkoutLogDto
     public string? Notes { get; set; }
 
     [MaxLength(WorkoutLogConsts.MaxEntries)]
-    public List<CreateWorkoutLogEntryDto> Entries { get; set; } = new();
+    public List<UpdateWorkoutLogEntryDto> Entries { get; set; } = new();
 }

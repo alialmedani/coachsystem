@@ -4,34 +4,33 @@ using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using CoachApp.Entites.Exercises;
-using CoachApp.Entites.Trainees;
 using CoachApp.Entites.WorkoutLogs;
+using CoachApp.Entites.WorkoutPlans;
 using CoachApp.Permissions;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
-using Volo.Abp.Users;
 
 namespace CoachApp.Apis.WorkoutLogs;
 
 /// <summary>Trainee-facing: the signed-in trainee logs and reads their own sessions.</summary>
 [Authorize(CoachAppPermissions.Trainee.WorkoutLogs.Default)]
-public class MyWorkoutLogAppService : CoachAppAppService, IMyWorkoutLogAppService
+public class MyWorkoutLogAppService : MyTraineeAppServiceBase, IMyWorkoutLogAppService
 {
     private readonly IRepository<WorkoutLog, Guid> _logRepository;
     private readonly IRepository<Exercise, Guid> _exerciseRepository;
-    private readonly IRepository<Trainee, Guid> _traineeRepository;
+    private readonly IRepository<WorkoutPlan, Guid> _planRepository;
 
     public MyWorkoutLogAppService(
         IRepository<WorkoutLog, Guid> logRepository,
         IRepository<Exercise, Guid> exerciseRepository,
-        IRepository<Trainee, Guid> traineeRepository)
+        IRepository<WorkoutPlan, Guid> planRepository)
     {
         _logRepository = logRepository;
         _exerciseRepository = exerciseRepository;
-        _traineeRepository = traineeRepository;
+        _planRepository = planRepository;
     }
 
     [Authorize(CoachAppPermissions.Trainee.WorkoutLogs.Create)]
@@ -52,6 +51,56 @@ public class MyWorkoutLogAppService : CoachAppAppService, IMyWorkoutLogAppServic
         foreach (var entry in input.Entries.OrderBy(e => e.Order))
         {
             log.AddEntry(GuidGenerator.Create(), entry.ExerciseId, entry.Order, entry.Sets, entry.Reps, entry.WeightKg, entry.Notes);
+        }
+
+        await _logRepository.InsertAsync(log, autoSave: true);
+        return await MapDetailAsync(log);
+    }
+
+    [Authorize(CoachAppPermissions.Trainee.WorkoutLogs.Create)]
+    public virtual async Task<WorkoutLogDto> CreateFromDayAsync(CreateWorkoutLogFromDayDto input)
+    {
+        var traineeId = await GetCurrentTraineeIdAsync();
+
+        // Resolve the day through its aggregate root, scoped to the current tenant (the plan repo is
+        // IMultiTenant) AND to the current trainee. A day from another tenant/trainee (or unknown) is
+        // reported uniformly as not-found — we never touch the non-multitenant child table directly and
+        // never leak the parent plan's id.
+        var planQuery = await _planRepository.GetQueryableAsync();
+        var owned = await AsyncExecuter.FirstOrDefaultAsync(
+            planQuery.Where(p => p.TraineeId == traineeId && p.Days.Any(d => d.Id == input.WorkoutDayId)));
+        if (owned == null)
+        {
+            throw new EntityNotFoundException(typeof(WorkoutDay), input.WorkoutDayId);
+        }
+
+        var plan = await _planRepository.GetAsync(owned.Id, includeDetails: true);
+        var planDay = plan.Days.First(d => d.Id == input.WorkoutDayId);
+
+        var log = WorkoutLog.Create(
+            GuidGenerator.Create(),
+            traineeId,
+            input.Date,
+            plan.Id,
+            planDay.Id,
+            input.Notes,
+            CurrentTenant.Id);
+
+        // Snapshot the prescribed exercises into the log: the plan values seed both the prescribed
+        // fields (durable record) and the initial actuals (which the trainee can later adjust).
+        foreach (var ex in planDay.Exercises.OrderBy(e => e.Order))
+        {
+            log.AddEntry(
+                GuidGenerator.Create(),
+                ex.ExerciseId,
+                ex.Order,
+                ex.Sets,
+                ex.Reps,
+                ex.WeightKg,
+                ex.Notes,
+                prescribedSets: ex.Sets,
+                prescribedReps: ex.Reps,
+                prescribedWeightKg: ex.WeightKg);
         }
 
         await _logRepository.InsertAsync(log, autoSave: true);
@@ -81,6 +130,37 @@ public class MyWorkoutLogAppService : CoachAppAppService, IMyWorkoutLogAppServic
         return await MapDetailAsync(log);
     }
 
+    [Authorize(CoachAppPermissions.Trainee.WorkoutLogs.Update)]
+    public virtual async Task<WorkoutLogDto> UpdateAsync(Guid id, UpdateWorkoutLogDto input)
+    {
+        var traineeId = await GetCurrentTraineeIdAsync();
+        var log = await GetOwnedWithDetailsAsync(id, traineeId);
+        await CheckExercisesExistAsync(input.Entries.Select(e => e.ExerciseId));
+
+        log.Date = input.Date;
+        log.Notes = input.Notes;
+
+        // Full replace of entries (mirrors the plan clear-and-rebuild convention).
+        log.ClearEntries();
+        foreach (var entry in input.Entries.OrderBy(e => e.Order))
+        {
+            log.AddEntry(
+                GuidGenerator.Create(),
+                entry.ExerciseId,
+                entry.Order,
+                entry.Sets,
+                entry.Reps,
+                entry.WeightKg,
+                entry.Notes,
+                entry.PrescribedSets,
+                entry.PrescribedReps,
+                entry.PrescribedWeightKg);
+        }
+
+        await _logRepository.UpdateAsync(log, autoSave: true);
+        return await MapDetailAsync(log);
+    }
+
     public virtual async Task DeleteAsync(Guid id)
     {
         var traineeId = await GetCurrentTraineeIdAsync();
@@ -98,18 +178,6 @@ public class MyWorkoutLogAppService : CoachAppAppService, IMyWorkoutLogAppServic
         }
 
         return log;
-    }
-
-    private async Task<Guid> GetCurrentTraineeIdAsync()
-    {
-        var userId = CurrentUser.GetId();
-        var trainee = await _traineeRepository.FirstOrDefaultAsync(x => x.UserId == userId);
-        if (trainee == null)
-        {
-            throw new EntityNotFoundException(typeof(Trainee), userId);
-        }
-
-        return trainee.Id;
     }
 
     private async Task CheckExercisesExistAsync(IEnumerable<Guid> exerciseIds)

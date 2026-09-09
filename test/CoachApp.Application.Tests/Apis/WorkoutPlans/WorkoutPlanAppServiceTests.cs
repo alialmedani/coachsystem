@@ -188,6 +188,38 @@ public abstract class WorkoutPlanAppServiceTests<TStartupModule> : CoachAppApiTe
     }
 
     [Fact]
+    public async Task Should_Persist_ScheduledDay_Through_Create_And_Update()
+    {
+        var trainee = await CreateTraineeAsync();
+
+        var created = await _planAppService.CreateAsync(new CreateUpdateWorkoutPlanDto
+        {
+            TraineeId = trainee.Id,
+            Name = "Weekly Split",
+            Days = new List<CreateUpdateWorkoutDayDto>
+            {
+                new() { Name = "Upper", Order = 1, ScheduledDay = DayOfWeek.Monday },
+                new() { Name = "Lower", Order = 2, ScheduledDay = null }
+            }
+        });
+
+        created.Days.Single(d => d.Name == "Upper").ScheduledDay.ShouldBe(DayOfWeek.Monday);
+        created.Days.Single(d => d.Name == "Lower").ScheduledDay.ShouldBeNull();
+
+        var updated = await _planAppService.UpdateAsync(created.Id, new CreateUpdateWorkoutPlanDto
+        {
+            TraineeId = trainee.Id,
+            Name = "Weekly Split",
+            Days = new List<CreateUpdateWorkoutDayDto>
+            {
+                new() { Name = "Upper", Order = 1, ScheduledDay = DayOfWeek.Wednesday }
+            }
+        });
+
+        updated.Days.Single().ScheduledDay.ShouldBe(DayOfWeek.Wednesday);
+    }
+
+    [Fact]
     public async Task Should_List_Plans_Filtered_By_Trainee()
     {
         var trainee1 = await CreateTraineeAsync();
