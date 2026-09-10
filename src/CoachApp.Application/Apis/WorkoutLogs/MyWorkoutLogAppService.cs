@@ -37,6 +37,7 @@ public class MyWorkoutLogAppService : MyTraineeAppServiceBase, IMyWorkoutLogAppS
     public virtual async Task<WorkoutLogDto> CreateAsync(CreateWorkoutLogDto input)
     {
         var traineeId = await GetCurrentTraineeIdAsync();
+        await ValidatePlanReferencesAsync(traineeId, input.WorkoutPlanId, input.WorkoutDayId);
         await CheckExercisesExistAsync(input.Entries.Select(e => e.ExerciseId));
 
         var log = WorkoutLog.Create(
@@ -189,6 +190,45 @@ public class MyWorkoutLogAppService : MyTraineeAppServiceBase, IMyWorkoutLogAppS
         }
 
         return log;
+    }
+
+    /// <summary>
+    /// Validates any plan/day reference a trainee attaches to a manual log actually belongs to them.
+    /// A foreign or unknown plan/day (or a day that isn't part of the referenced plan) is reported
+    /// uniformly as not-found — the same convention the other My* services use — so ownership of
+    /// another trainee's data is never disclosed. Omitted references (a manual log) pass through.
+    /// </summary>
+    private async Task ValidatePlanReferencesAsync(Guid traineeId, Guid? workoutPlanId, Guid? workoutDayId)
+    {
+        if (workoutPlanId == null && workoutDayId == null)
+        {
+            return;
+        }
+
+        var planQuery = await _planRepository.GetQueryableAsync();
+
+        if (workoutDayId.HasValue)
+        {
+            // The day must belong to a plan owned by the trainee; when a plan id is also supplied it
+            // must be that same plan, so a day from a different plan can't be attached.
+            var owned = await AsyncExecuter.FirstOrDefaultAsync(
+                planQuery.Where(p => p.TraineeId == traineeId
+                    && (workoutPlanId == null || p.Id == workoutPlanId.Value)
+                    && p.Days.Any(d => d.Id == workoutDayId.Value)));
+            if (owned == null)
+            {
+                throw new EntityNotFoundException(typeof(WorkoutDay), workoutDayId.Value);
+            }
+        }
+        else
+        {
+            var owned = await AsyncExecuter.FirstOrDefaultAsync(
+                planQuery.Where(p => p.TraineeId == traineeId && p.Id == workoutPlanId!.Value));
+            if (owned == null)
+            {
+                throw new EntityNotFoundException(typeof(WorkoutPlan), workoutPlanId!.Value);
+            }
+        }
     }
 
     private async Task CheckExercisesExistAsync(IEnumerable<Guid> exerciseIds)

@@ -337,6 +337,65 @@ public abstract class MyNutritionLogAppServiceTests<TStartupModule> : CoachAppAp
         }
     }
 
+    [Fact]
+    public async Task Create_With_Own_Plan_Reference_Should_Succeed()
+    {
+        var trainee = await CreateTraineeAsync();
+        var food = await CreateFoodAsync();
+
+        var plan = await _planAppService.CreateAsync(new CreateUpdateNutritionPlanDto
+        {
+            TraineeId = trainee.Id,
+            Name = "Plan",
+            Meals = new List<CreateUpdateMealDto>
+            {
+                new() { Name = "Meal", Order = 1, Items = new List<CreateUpdateMealItemDto> { new() { FoodId = food.Id, Order = 1, Quantity = 1m } } }
+            }
+        });
+
+        NutritionLogDto log;
+        using (ChangeToTrainee(trainee))
+        {
+            log = await _myLog.CreateAsync(new CreateNutritionLogDto
+            {
+                NutritionPlanId = plan.Id,
+                Date = new DateTime(2026, 4, 1),
+                Entries = new List<CreateNutritionLogEntryDto> { new() { FoodId = food.Id, Order = 1, Quantity = 1m } }
+            });
+        }
+
+        log.NutritionPlanId.ShouldBe(plan.Id);
+    }
+
+    [Fact]
+    public async Task Create_With_Foreign_Plan_Reference_Should_Throw()
+    {
+        var trainee = await CreateTraineeAsync();
+        var other = await CreateTraineeAsync();
+        var food = await CreateFoodAsync();
+
+        var foreignPlan = await _planAppService.CreateAsync(new CreateUpdateNutritionPlanDto
+        {
+            TraineeId = other.Id,
+            Name = "Foreign",
+            Meals = new List<CreateUpdateMealDto>
+            {
+                new() { Name = "Meal", Order = 1, Items = new List<CreateUpdateMealItemDto> { new() { FoodId = food.Id, Order = 1, Quantity = 1m } } }
+            }
+        });
+
+        using (ChangeToTrainee(trainee))
+        {
+            await Should.ThrowAsync<EntityNotFoundException>(() =>
+                _myLog.CreateAsync(new CreateNutritionLogDto
+                {
+                    NutritionPlanId = foreignPlan.Id,
+                    Date = new DateTime(2026, 4, 1),
+                    Entries = new List<CreateNutritionLogEntryDto> { new() { FoodId = food.Id, Order = 1, Quantity = 1m } }
+                }));
+        }
+    }
+
     private async Task<Guid> LogOnAsync(Guid foodId, DateTime date)
     {
         var log = await _myLog.CreateAsync(new CreateNutritionLogDto

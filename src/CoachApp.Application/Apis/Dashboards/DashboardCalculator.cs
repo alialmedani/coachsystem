@@ -128,7 +128,13 @@ internal static class DashboardCalculator
         dto.HasActivePlan = activePlan != null;
         if (activePlan != null)
         {
-            var plannedPerWeek = activePlan.Days.Count;
+            // Planned weekly cadence = the distinct weekdays the plan schedules. Days with no
+            // ScheduledDay (unscheduled/reference days) and duplicate weekdays do not add to it.
+            var plannedPerWeek = activePlan.Days
+                .Where(d => d.ScheduledDay != null)
+                .Select(d => d.ScheduledDay)
+                .Distinct()
+                .Count();
             var plannedSessions = plannedPerWeek * weeks;
             dto.PlannedPerWeek = plannedPerWeek;
             dto.PlannedSessions = plannedSessions;

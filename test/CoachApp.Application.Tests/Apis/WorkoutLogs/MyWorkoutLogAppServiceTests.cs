@@ -233,4 +233,111 @@ public abstract class MyWorkoutLogAppServiceTests<TStartupModule> : CoachAppApiT
         updatedEntry.PrescribedReps.ShouldBe("8-12");
         updatedEntry.PrescribedWeightKg.ShouldBe(60m);
     }
+
+    [Fact]
+    public async Task Create_With_Own_Plan_And_Day_Reference_Should_Succeed()
+    {
+        var (trainee, plan, dayId) = await SeedTraineeWithPlanDayAsync();
+        var exerciseId = plan.Days.Single().Exercises.Single().ExerciseId;
+
+        WorkoutLogDto log;
+        using (ChangeToTrainee(trainee))
+        {
+            log = await _myLog.CreateAsync(new CreateWorkoutLogDto
+            {
+                WorkoutPlanId = plan.Id,
+                WorkoutDayId = dayId,
+                Date = new DateTime(2026, 3, 2),
+                Entries = new List<CreateWorkoutLogEntryDto> { new() { ExerciseId = exerciseId, Order = 1, Sets = 3 } }
+            });
+        }
+
+        log.WorkoutPlanId.ShouldBe(plan.Id);
+        log.WorkoutDayId.ShouldBe(dayId);
+        log.Entries.Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Create_With_Foreign_Plan_Reference_Should_Throw()
+    {
+        var (trainee, _, _) = await SeedTraineeWithPlanDayAsync();
+        var (_, foreignPlan, _) = await SeedTraineeWithPlanDayAsync();
+
+        using (ChangeToTrainee(trainee))
+        {
+            await Should.ThrowAsync<EntityNotFoundException>(() =>
+                _myLog.CreateAsync(new CreateWorkoutLogDto
+                {
+                    WorkoutPlanId = foreignPlan.Id,
+                    Date = new DateTime(2026, 3, 2),
+                    Entries = new List<CreateWorkoutLogEntryDto>()
+                }));
+        }
+    }
+
+    [Fact]
+    public async Task Create_With_Foreign_Day_Reference_Should_Throw()
+    {
+        var (trainee, _, _) = await SeedTraineeWithPlanDayAsync();
+        var (_, _, foreignDayId) = await SeedTraineeWithPlanDayAsync();
+
+        using (ChangeToTrainee(trainee))
+        {
+            await Should.ThrowAsync<EntityNotFoundException>(() =>
+                _myLog.CreateAsync(new CreateWorkoutLogDto
+                {
+                    WorkoutDayId = foreignDayId,
+                    Date = new DateTime(2026, 3, 2),
+                    Entries = new List<CreateWorkoutLogEntryDto>()
+                }));
+        }
+    }
+
+    [Fact]
+    public async Task Create_With_Day_From_Another_Plan_Should_Throw()
+    {
+        var (trainee, plan1, _) = await SeedTraineeWithPlanDayAsync();
+
+        // A second plan owned by the SAME trainee; its day must not be attachable under plan1's id.
+        var plan2 = await _planAppService.CreateAsync(new CreateUpdateWorkoutPlanDto
+        {
+            TraineeId = trainee.Id,
+            Name = "Second",
+            Days = new List<CreateUpdateWorkoutDayDto> { new() { Name = "Other", Order = 1 } }
+        });
+        var dayFromPlan2 = plan2.Days.Single().Id;
+
+        using (ChangeToTrainee(trainee))
+        {
+            await Should.ThrowAsync<EntityNotFoundException>(() =>
+                _myLog.CreateAsync(new CreateWorkoutLogDto
+                {
+                    WorkoutPlanId = plan1.Id,
+                    WorkoutDayId = dayFromPlan2,
+                    Date = new DateTime(2026, 3, 2),
+                    Entries = new List<CreateWorkoutLogEntryDto>()
+                }));
+        }
+    }
+
+    [Fact]
+    public async Task Create_Manual_Log_Without_Plan_References_Should_Succeed()
+    {
+        var (trainee, _, _) = await SeedTraineeWithPlanDayAsync();
+        var ex = await CreateExerciseAsync("Curl");
+
+        WorkoutLogDto log;
+        using (ChangeToTrainee(trainee))
+        {
+            log = await _myLog.CreateAsync(new CreateWorkoutLogDto
+            {
+                Date = new DateTime(2026, 3, 2),
+                Entries = new List<CreateWorkoutLogEntryDto> { new() { ExerciseId = ex.Id, Order = 1, Sets = 3 } }
+            });
+        }
+
+        log.WorkoutPlanId.ShouldBeNull();
+        log.WorkoutDayId.ShouldBeNull();
+        log.Entries.Count.ShouldBe(1);
+    }
 }
