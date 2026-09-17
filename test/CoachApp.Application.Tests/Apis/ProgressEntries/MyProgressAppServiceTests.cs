@@ -1,8 +1,10 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using CoachApp.Apis;
 using CoachApp.Entites.ProgressEntries;
 using Shouldly;
+using Volo.Abp;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Modularity;
 using Xunit;
@@ -20,10 +22,12 @@ public abstract class MyProgressAppServiceTests<TStartupModule> : CoachAppApiTes
     where TStartupModule : IAbpModule
 {
     private readonly IMyProgressAppService _myProgress;
+    private readonly IProgressEntryAppService _coachProgress;
 
     protected MyProgressAppServiceTests()
     {
         _myProgress = GetRequiredService<IMyProgressAppService>();
+        _coachProgress = GetRequiredService<IProgressEntryAppService>();
     }
 
     [Fact]
@@ -121,6 +125,80 @@ public abstract class MyProgressAppServiceTests<TStartupModule> : CoachAppApiTes
         {
             await _myProgress.DeleteAsync(entryId);
             await Should.ThrowAsync<EntityNotFoundException>(() => _myProgress.GetAsync(entryId));
+        }
+    }
+
+    [Fact]
+    public async Task Update_Should_Modify_Own_Entry()
+    {
+        // F3/PD4: the trainee can edit an entry they authored, and read it back.
+        var trainee = await CreateTraineeAsync();
+
+        using (ChangeToTrainee(trainee))
+        {
+            var created = await _myProgress.CreateAsync(new CreateMyProgressEntryDto { Date = new DateTime(2026, 4, 1), WeightKg = 80m });
+
+            var updated = await _myProgress.UpdateAsync(created.Id, new UpdateMyProgressEntryDto
+            {
+                Date = created.Date,
+                WeightKg = 78.5m,
+                Notes = "corrected"
+            });
+
+            updated.WeightKg.ShouldBe(78.5m);
+            updated.Notes.ShouldBe("corrected");
+            updated.IsCoachAuthored.ShouldBeFalse();
+
+            (await _myProgress.GetAsync(created.Id)).WeightKg.ShouldBe(78.5m); // readable back
+        }
+    }
+
+    [Fact]
+    public async Task Update_Should_Reject_A_Foreign_Entry()
+    {
+        var trainee = await CreateTraineeAsync();
+        var other = await CreateTraineeAsync();
+
+        Guid entryId;
+        using (ChangeToTrainee(trainee))
+        {
+            entryId = (await _myProgress.CreateAsync(new CreateMyProgressEntryDto { Date = new DateTime(2026, 4, 1), WeightKg = 80m })).Id;
+        }
+
+        using (ChangeToTrainee(other))
+        {
+            await Should.ThrowAsync<EntityNotFoundException>(() =>
+                _myProgress.UpdateAsync(entryId, new UpdateMyProgressEntryDto { Date = new DateTime(2026, 4, 1), WeightKg = 60m }));
+        }
+    }
+
+    [Fact]
+    public async Task Trainee_Cannot_Edit_Or_Delete_A_Coach_Authored_Entry_And_Sees_Attribution()
+    {
+        // F4/PD4: a coach-created entry appears on the trainee's timeline flagged as coach-authored,
+        // and the trainee may neither delete nor edit it.
+        var trainee = await CreateTraineeAsync();
+
+        // Coach (default principal) records an entry for the trainee.
+        var coachEntry = await _coachProgress.CreateAsync(new CreateUpdateProgressEntryDto
+        {
+            TraineeId = trainee.Id,
+            Date = new DateTime(2026, 4, 1),
+            WeightKg = 85m
+        });
+
+        using (ChangeToTrainee(trainee))
+        {
+            var mine = await _myProgress.GetListAsync(new GetMyProgressListInput());
+            var seen = mine.Items.Single(e => e.Id == coachEntry.Id);
+            seen.IsCoachAuthored.ShouldBeTrue();
+
+            (await Should.ThrowAsync<BusinessException>(() => _myProgress.DeleteAsync(coachEntry.Id)))
+                .Code.ShouldBe(CoachAppDomainErrorCodes.CannotModifyCoachAuthoredProgress);
+
+            (await Should.ThrowAsync<BusinessException>(() =>
+                _myProgress.UpdateAsync(coachEntry.Id, new UpdateMyProgressEntryDto { Date = coachEntry.Date, WeightKg = 70m })))
+                .Code.ShouldBe(CoachAppDomainErrorCodes.CannotModifyCoachAuthoredProgress);
         }
     }
 }

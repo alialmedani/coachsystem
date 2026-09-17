@@ -61,12 +61,8 @@ public class TraineeNoteAppService : CoachAppAppService, ITraineeNoteAppService
     {
         var note = await _noteRepository.GetAsync(id);
 
-        if (note.TraineeId != input.TraineeId)
-        {
-            await CheckTraineeExistsAsync(input.TraineeId);
-            note.TraineeId = input.TraineeId;
-        }
-
+        // F18/PD1: a note is permanently bound to its trainee. The client's TraineeId is ignored
+        // on update, so a coach can never move an existing note onto a different trainee.
         note.Date = input.Date;
         note.Text = input.Text;
 

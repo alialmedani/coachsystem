@@ -64,6 +64,7 @@ public class WorkoutPlanAppService : CoachAppAppService, IWorkoutPlanAppService
     public virtual async Task<WorkoutPlanDto> CreateAsync(CreateUpdateWorkoutPlanDto input)
     {
         await CheckTraineeExistsAsync(input.TraineeId);
+        ValidateScheduledDaysUnique(input);
         await CheckExercisesExistAsync(input);
 
         var plan = WorkoutPlan.Create(GuidGenerator.Create(), input.TraineeId, input.Name, input.Description, CurrentTenant.Id);
@@ -84,12 +85,9 @@ public class WorkoutPlanAppService : CoachAppAppService, IWorkoutPlanAppService
     {
         var plan = await _planRepository.GetAsync(id, includeDetails: true);
 
-        if (plan.TraineeId != input.TraineeId)
-        {
-            await CheckTraineeExistsAsync(input.TraineeId);
-            plan.TraineeId = input.TraineeId;
-        }
-
+        // F18/PD1: a plan is permanently bound to its trainee. The client's TraineeId is ignored
+        // on update, so a coach can never reassign an existing plan to a different trainee.
+        ValidateScheduledDaysUnique(input);
         await CheckExercisesExistAsync(input);
 
         plan.Name = input.Name;
@@ -170,6 +168,25 @@ public class WorkoutPlanAppService : CoachAppAppService, IWorkoutPlanAppService
         if (trainee == null)
         {
             throw new BusinessException(CoachAppDomainErrorCodes.TraineeNotFound);
+        }
+    }
+
+    /// <summary>
+    /// F2/PD9: a workout plan may schedule at most one day per weekday. Days with no
+    /// <c>ScheduledDay</c> (unscheduled/reference days) are unlimited; only non-null
+    /// weekdays must be unique. Rejecting duplicates removes the "only the first day on a
+    /// weekday is loggable" data-loss gap.
+    /// </summary>
+    private static void ValidateScheduledDaysUnique(CreateUpdateWorkoutPlanDto input)
+    {
+        var scheduled = input.Days
+            .Where(d => d.ScheduledDay.HasValue)
+            .Select(d => d.ScheduledDay!.Value)
+            .ToList();
+
+        if (scheduled.Count != scheduled.Distinct().Count())
+        {
+            throw new BusinessException(CoachAppDomainErrorCodes.DuplicateScheduledDay);
         }
     }
 

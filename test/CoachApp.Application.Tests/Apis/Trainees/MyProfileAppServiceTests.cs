@@ -1,6 +1,8 @@
+using System;
 using System.Threading.Tasks;
 using CoachApp.Apis;
 using CoachApp.Entites.Trainees;
+using CoachApp.Enums;
 using Shouldly;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Modularity;
@@ -43,5 +45,32 @@ public abstract class MyProfileAppServiceTests<TStartupModule> : CoachAppApiTest
     {
         // No ChangeToTrainee: the default principal is the host admin, which has no Trainee record.
         await Should.ThrowAsync<EntityNotFoundException>(() => _myProfile.GetAsync());
+    }
+
+    [Fact]
+    public async Task Update_Should_Edit_Contact_Fields_Only_And_Keep_Coaching_Fields()
+    {
+        // PD6: the trainee may edit phone/email/birthdate; user name is immutable and coaching
+        // fields (goal, targets) stay coach-owned.
+        var trainee = await CreateTraineeAsync(goal: TrainingGoal.Strength);
+
+        TraineeDto updated;
+        using (ChangeToTrainee(trainee))
+        {
+            updated = await _myProfile.UpdateAsync(new UpdateMyProfileDto
+            {
+                PhoneNumber = "0700-1234567",
+                Email = "trainee.self@example.com",
+                BirthDate = new DateTime(1995, 6, 15)
+            });
+        }
+
+        updated.PhoneNumber.ShouldBe("0700-1234567");
+        updated.Email.ShouldBe("trainee.self@example.com");
+        updated.BirthDate.ShouldBe(new DateTime(1995, 6, 15));
+
+        // Immutable / coach-owned fields are untouched.
+        updated.UserName.ShouldBe(trainee.UserName);
+        updated.Goal.ShouldBe(TrainingGoal.Strength);
     }
 }

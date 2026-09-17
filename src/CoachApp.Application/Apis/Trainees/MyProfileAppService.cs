@@ -17,4 +17,21 @@ public class MyProfileAppService : MyTraineeAppServiceBase, IMyProfileAppService
         var trainee = await GetCurrentTraineeAsync();
         return ObjectMapper.Map<Trainee, TraineeDto>(trainee);
     }
+
+    /// <summary>
+    /// PD6: restricted self-edit. Only contact details and birthdate are updated; the user name is
+    /// immutable and coaching fields (goal, height, start/target weight, active state) are left
+    /// untouched so they stay coach-owned. "Current weight" is recorded separately as a progress entry.
+    /// </summary>
+    public virtual async Task<TraineeDto> UpdateAsync(UpdateMyProfileDto input)
+    {
+        var trainee = await GetCurrentTraineeAsync();
+
+        trainee.PhoneNumber = input.PhoneNumber;
+        trainee.Email = input.Email;
+        trainee.BirthDate = input.BirthDate;
+
+        await TraineeRepository.UpdateAsync(trainee, autoSave: true);
+        return ObjectMapper.Map<Trainee, TraineeDto>(trainee);
+    }
 }

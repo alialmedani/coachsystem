@@ -8,6 +8,7 @@ using CoachApp.Apis.TraineeNotes;
 using CoachApp.Apis.Trainees;
 using CoachApp.Apis.WorkoutLogs;
 using CoachApp.Apis.WorkoutPlans;
+using CoachApp.Identity;
 using Xunit;
 
 namespace CoachApp.EntityFrameworkCore.Applications;
@@ -91,5 +92,10 @@ public class EfCoreMyNoteAppServiceTests : MyNoteAppServiceTests<CoachAppEntityF
 
 [Collection(CoachAppTestConsts.CollectionDefinitionName)]
 public class EfCoreMyProfileAppServiceTests : MyProfileAppServiceTests<CoachAppEntityFrameworkCoreTestModule>
+{
+}
+
+[Collection(CoachAppTestConsts.CollectionDefinitionName)]
+public class EfCoreSingleCoachPerTenantHandlerTests : SingleCoachPerTenantHandlerTests<CoachAppEntityFrameworkCoreTestModule>
 {
 }

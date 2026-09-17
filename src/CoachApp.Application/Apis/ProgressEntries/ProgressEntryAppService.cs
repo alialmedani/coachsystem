@@ -67,12 +67,8 @@ public class ProgressEntryAppService : CoachAppAppService, IProgressEntryAppServ
     {
         var entry = await _progressRepository.GetAsync(id);
 
-        if (entry.TraineeId != input.TraineeId)
-        {
-            await CheckTraineeExistsAsync(input.TraineeId);
-            entry.TraineeId = input.TraineeId;
-        }
-
+        // F18/PD1: an entry is permanently bound to its trainee. The client's TraineeId is ignored
+        // on update, so a coach can never move an existing entry onto a different trainee's timeline.
         entry.Date = input.Date;
         entry.WeightKg = input.WeightKg;
         entry.BodyFatPercent = input.BodyFatPercent;

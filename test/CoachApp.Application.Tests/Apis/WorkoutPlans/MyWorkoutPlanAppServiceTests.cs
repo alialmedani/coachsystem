@@ -82,14 +82,44 @@ public abstract class MyWorkoutPlanAppServiceTests<TStartupModule> : CoachAppApi
         var trainee = await CreateTraineeAsync();
         var other = await CreateTraineeAsync();
 
-        await _coachPlan.CreateAsync(new CreateUpdateWorkoutPlanDto { TraineeId = trainee.Id, Name = "Mine" });
-        await _coachPlan.CreateAsync(new CreateUpdateWorkoutPlanDto { TraineeId = other.Id, Name = "Theirs" });
+        await _coachPlan.CreateAsync(new CreateUpdateWorkoutPlanDto { TraineeId = trainee.Id, Name = "Mine", IsActive = true });
+        await _coachPlan.CreateAsync(new CreateUpdateWorkoutPlanDto { TraineeId = other.Id, Name = "Theirs", IsActive = true });
 
         using (ChangeToTrainee(trainee))
         {
             var list = await _myPlan.GetListAsync();
             list.Count.ShouldBe(1);
             list.Single().TraineeId.ShouldBe(trainee.Id);
+        }
+    }
+
+    [Fact]
+    public async Task GetList_Should_Hide_Inactive_Plans()
+    {
+        // PD8: a trainee sees active plans only.
+        var trainee = await CreateTraineeAsync();
+
+        await _coachPlan.CreateAsync(new CreateUpdateWorkoutPlanDto { TraineeId = trainee.Id, Name = "Active", IsActive = true });
+        await _coachPlan.CreateAsync(new CreateUpdateWorkoutPlanDto { TraineeId = trainee.Id, Name = "Inactive", IsActive = false });
+
+        using (ChangeToTrainee(trainee))
+        {
+            var list = await _myPlan.GetListAsync();
+            list.Count.ShouldBe(1);
+            list.Single().Name.ShouldBe("Active");
+        }
+    }
+
+    [Fact]
+    public async Task Get_Should_Throw_For_An_Inactive_Plan()
+    {
+        // PD8: an inactive plan is not fetchable by the trainee, even by id.
+        var trainee = await CreateTraineeAsync();
+        var plan = await _coachPlan.CreateAsync(new CreateUpdateWorkoutPlanDto { TraineeId = trainee.Id, Name = "Inactive", IsActive = false });
+
+        using (ChangeToTrainee(trainee))
+        {
+            await Should.ThrowAsync<EntityNotFoundException>(() => _myPlan.GetAsync(plan.Id));
         }
     }
 

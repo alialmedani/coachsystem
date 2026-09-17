@@ -68,6 +68,10 @@ public class MyDashboardAppService : MyTraineeAppServiceBase, IMyDashboardAppSer
                 traineeId, input.Date,
                 _nutritionLogRepository, _nutritionPlanRepository, _foodRepository,
                 ObjectMapper, AsyncExecuter),
+            NutritionAdherenceRange = await DashboardCalculator.ComputeNutritionAdherenceRangeAsync(
+                traineeId, input.FromDate, input.ToDate,
+                _nutritionLogRepository, _nutritionPlanRepository, _foodRepository,
+                ObjectMapper, AsyncExecuter),
             WorkoutCompletion = await DashboardCalculator.ComputeWorkoutCompletionAsync(
                 traineeId, input.FromDate, input.ToDate,
                 _workoutLogRepository, _workoutPlanRepository,

@@ -12,6 +12,10 @@ public class MealItemDto : EntityDto<Guid>
 
     public string? ServingUnit { get; set; }
 
+    /// <summary>The size of one serving of the food (enriched), e.g. 100 for "100 g".
+    /// <see cref="Quantity"/> counts servings, so the real amount is <c>Quantity * ServingSize ServingUnit</c>.</summary>
+    public decimal ServingSize { get; set; }
+
     /// <summary>Number of the food's servings.</summary>
     public decimal Quantity { get; set; }
 

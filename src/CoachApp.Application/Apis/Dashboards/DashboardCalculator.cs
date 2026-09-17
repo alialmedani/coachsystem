@@ -93,6 +93,68 @@ internal static class DashboardCalculator
         return dto;
     }
 
+    /// <summary>
+    /// F5/PD5: nutrition adherence aggregated over a date range. Sums consumed calories across every
+    /// log in the range and compares to the active plan's daily target, averaging over the days
+    /// actually logged. Reuses the same per-serving enrichers as the single-day calculation.
+    /// </summary>
+    public static async Task<NutritionAdherenceRangeDto> ComputeNutritionAdherenceRangeAsync(
+        Guid traineeId,
+        DateTime fromDate,
+        DateTime toDate,
+        IRepository<NutritionLog, Guid> nutritionLogRepository,
+        IRepository<NutritionPlan, Guid> nutritionPlanRepository,
+        IRepository<Food, Guid> foodRepository,
+        IObjectMapper objectMapper,
+        IAsyncQueryableExecuter asyncExecuter)
+    {
+        var from = fromDate.Date;
+        var to = toDate.Date;
+        var rangeEnd = to.AddDays(1);
+
+        var logQuery = (await nutritionLogRepository.WithDetailsAsync(x => x.Entries))
+            .Where(x => x.TraineeId == traineeId && x.Date >= from && x.Date < rangeEnd);
+        var logs = await asyncExecuter.ToListAsync(logQuery);
+
+        decimal consumedCaloriesTotal = 0;
+        foreach (var log in logs)
+        {
+            var logDto = objectMapper.Map<NutritionLog, NutritionLogDto>(log);
+            await NutritionLogEnricher.EnrichAsync(logDto, foodRepository);
+            consumedCaloriesTotal += logDto.TotalCalories;
+        }
+
+        var daysLogged = logs.Select(l => l.Date.Date).Distinct().Count();
+
+        var dto = new NutritionAdherenceRangeDto
+        {
+            FromDate = from,
+            ToDate = to,
+            DaysInRange = Math.Max(1, (to - from).Days + 1),
+            DaysLogged = daysLogged,
+            ConsumedCaloriesTotal = consumedCaloriesTotal
+        };
+
+        var planQuery = (await nutritionPlanRepository.WithDetailsAsync())
+            .Where(p => p.TraineeId == traineeId && p.IsActive);
+        var activePlan = await asyncExecuter.FirstOrDefaultAsync(planQuery);
+
+        dto.HasActivePlan = activePlan != null;
+        if (activePlan != null)
+        {
+            var planDto = objectMapper.Map<NutritionPlan, NutritionPlanDto>(activePlan);
+            await NutritionPlanEnricher.EnrichAsync(planDto, foodRepository);
+
+            var targetPerDay = planDto.TargetCalories ?? planDto.TotalCalories;
+            dto.TargetCaloriesPerDay = targetPerDay;
+            dto.AverageCaloriesPercent = (daysLogged > 0 && targetPerDay > 0)
+                ? Math.Round(consumedCaloriesTotal / (targetPerDay * daysLogged) * 100m, 1)
+                : null;
+        }
+
+        return dto;
+    }
+
     public static async Task<WorkoutCompletionDto> ComputeWorkoutCompletionAsync(
         Guid traineeId,
         DateTime fromDate,
