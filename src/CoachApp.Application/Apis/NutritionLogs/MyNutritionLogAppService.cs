@@ -37,6 +37,7 @@ public class MyNutritionLogAppService : MyTraineeAppServiceBase, IMyNutritionLog
     public virtual async Task<NutritionLogDto> CreateAsync(CreateNutritionLogDto input)
     {
         var traineeId = await GetCurrentTraineeIdAsync();
+        await ValidatePlanReferenceAsync(traineeId, input.NutritionPlanId);
         await CheckFoodsExistAsync(input.Entries.Select(e => e.FoodId));
 
         var log = NutritionLog.Create(
@@ -157,6 +158,27 @@ public class MyNutritionLogAppService : MyTraineeAppServiceBase, IMyNutritionLog
         }
 
         return log;
+    }
+
+    /// <summary>
+    /// Validates a nutrition-plan reference a trainee attaches to a manual log belongs to them.
+    /// A foreign or unknown plan is reported uniformly as not-found (same convention as the other
+    /// My* services), so ownership is never disclosed. An omitted reference (manual log) passes.
+    /// </summary>
+    private async Task ValidatePlanReferenceAsync(Guid traineeId, Guid? nutritionPlanId)
+    {
+        if (nutritionPlanId == null)
+        {
+            return;
+        }
+
+        var planQuery = await _planRepository.GetQueryableAsync();
+        var owned = await AsyncExecuter.FirstOrDefaultAsync(
+            planQuery.Where(p => p.Id == nutritionPlanId.Value && p.TraineeId == traineeId));
+        if (owned == null)
+        {
+            throw new EntityNotFoundException(typeof(NutritionPlan), nutritionPlanId.Value);
+        }
     }
 
     private async Task CheckFoodsExistAsync(IEnumerable<Guid> foodIds)

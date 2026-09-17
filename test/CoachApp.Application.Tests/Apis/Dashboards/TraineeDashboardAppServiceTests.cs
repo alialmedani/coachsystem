@@ -116,7 +116,7 @@ public abstract class TraineeDashboardAppServiceTests<TStartupModule> : CoachApp
     {
         var trainee = await CreateTraineeAsync();
 
-        // Active plan with 2 days => planned 2 per week.
+        // Active plan with 2 scheduled weekdays => planned 2 per week.
         await _workoutPlanAppService.CreateAsync(new CreateUpdateWorkoutPlanDto
         {
             TraineeId = trainee.Id,
@@ -124,8 +124,8 @@ public abstract class TraineeDashboardAppServiceTests<TStartupModule> : CoachApp
             IsActive = true,
             Days = new List<CreateUpdateWorkoutDayDto>
             {
-                new() { Name = "Day 1", Order = 1 },
-                new() { Name = "Day 2", Order = 2 }
+                new() { Name = "Day 1", Order = 1, ScheduledDay = DayOfWeek.Monday },
+                new() { Name = "Day 2", Order = 2, ScheduledDay = DayOfWeek.Wednesday }
             }
         });
 
@@ -180,6 +180,106 @@ public abstract class TraineeDashboardAppServiceTests<TStartupModule> : CoachApp
                 Date = new DateTime(2026, 3, 2)
             }));
         ex.Code.ShouldBe(CoachAppDomainErrorCodes.TraineeNotFound);
+    }
+
+    [Fact]
+    public async Task Workout_Completion_Should_Ignore_Unscheduled_Days()
+    {
+        var trainee = await CreateTraineeAsync();
+
+        // One scheduled day (Monday) + one day with no ScheduledDay (reference/unscheduled).
+        await _workoutPlanAppService.CreateAsync(new CreateUpdateWorkoutPlanDto
+        {
+            TraineeId = trainee.Id,
+            Name = "Active",
+            IsActive = true,
+            Days = new List<CreateUpdateWorkoutDayDto>
+            {
+                new() { Name = "Scheduled", Order = 1, ScheduledDay = DayOfWeek.Monday },
+                new() { Name = "Unscheduled", Order = 2 }
+            }
+        });
+
+        var from = new DateTime(2026, 3, 2);
+        var result = await _dashboard.GetWorkoutCompletionAsync(new GetWorkoutCompletionInput
+        {
+            TraineeId = trainee.Id,
+            FromDate = from,
+            ToDate = from.AddDays(6)
+        });
+
+        result.PlannedPerWeek.ShouldBe(1);   // the unscheduled day is not counted
+        result.Weeks.ShouldBe(1);
+        result.PlannedSessions.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Workout_Completion_Should_Count_Duplicate_Scheduled_Weekdays_Once()
+    {
+        var trainee = await CreateTraineeAsync();
+
+        // Two days both scheduled on Monday => one planned weekday.
+        await _workoutPlanAppService.CreateAsync(new CreateUpdateWorkoutPlanDto
+        {
+            TraineeId = trainee.Id,
+            Name = "Active",
+            IsActive = true,
+            Days = new List<CreateUpdateWorkoutDayDto>
+            {
+                new() { Name = "Push", Order = 1, ScheduledDay = DayOfWeek.Monday },
+                new() { Name = "Pull", Order = 2, ScheduledDay = DayOfWeek.Monday }
+            }
+        });
+
+        var from = new DateTime(2026, 3, 2);
+        var result = await _dashboard.GetWorkoutCompletionAsync(new GetWorkoutCompletionInput
+        {
+            TraineeId = trainee.Id,
+            FromDate = from,
+            ToDate = from.AddDays(6)
+        });
+
+        result.PlannedPerWeek.ShouldBe(1);
+        result.PlannedSessions.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Workout_Completion_Should_Count_Distinct_Scheduled_Weekdays()
+    {
+        var trainee = await CreateTraineeAsync();
+
+        // Three distinct scheduled weekdays => planned 3 per week.
+        await _workoutPlanAppService.CreateAsync(new CreateUpdateWorkoutPlanDto
+        {
+            TraineeId = trainee.Id,
+            Name = "Active",
+            IsActive = true,
+            Days = new List<CreateUpdateWorkoutDayDto>
+            {
+                new() { Name = "Day 1", Order = 1, ScheduledDay = DayOfWeek.Monday },
+                new() { Name = "Day 2", Order = 2, ScheduledDay = DayOfWeek.Wednesday },
+                new() { Name = "Day 3", Order = 3, ScheduledDay = DayOfWeek.Friday }
+            }
+        });
+
+        var from = new DateTime(2026, 3, 2); // Monday
+        var to = from.AddDays(6);            // inclusive week
+        await SeedWorkoutLogAsync(trainee.Id, from);
+        await SeedWorkoutLogAsync(trainee.Id, from.AddDays(2));
+        await SeedWorkoutLogAsync(trainee.Id, from.AddDays(4));
+
+        var result = await _dashboard.GetWorkoutCompletionAsync(new GetWorkoutCompletionInput
+        {
+            TraineeId = trainee.Id,
+            FromDate = from,
+            ToDate = to
+        });
+
+        result.PlannedPerWeek.ShouldBe(3);
+        result.Weeks.ShouldBe(1);
+        result.PlannedSessions.ShouldBe(3);
+        result.CompletedSessions.ShouldBe(3);
+        result.CompletionPercent.ShouldBe(100m);
     }
 
     private Task SeedNutritionLogAsync(Guid traineeId, DateTime date, Guid foodId, decimal quantity)

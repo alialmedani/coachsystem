@@ -166,8 +166,12 @@ public class TraineeAppService : CoachAppAppService, ITraineeAppService
     {
         var trainee = await _traineeRepository.GetAsync(id);
 
-        // Remove the trainee's dependent data so nothing is left orphaned. (Plan/log
-        // child rows cascade at the database level.)
+        // Remove the trainee's dependent aggregates. Trainees and these aggregate roots are all
+        // FullAuditedAggregateRoot, so DeleteAsync performs a SOFT delete (sets IsDeleted) — the
+        // configured cascade FKs never physically delete anything. Child records (days/meals/items/
+        // entries) therefore remain physically stored under their soft-deleted parents and are
+        // hidden by ABP's soft-delete query filters (no orphans and no cross-tenant exposure). The
+        // linked IdentityUser below is hard-deleted.
         await _workoutLogRepository.DeleteAsync(x => x.TraineeId == id);
         await _nutritionLogRepository.DeleteAsync(x => x.TraineeId == id);
         await _workoutPlanRepository.DeleteAsync(x => x.TraineeId == id);
