@@ -3,13 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
-using CoachApp.Entites.NutritionLogs;
-using CoachApp.Entites.NutritionPlans;
-using CoachApp.Entites.ProgressEntries;
-using CoachApp.Entites.TraineeNotes;
 using CoachApp.Entites.Trainees;
-using CoachApp.Entites.WorkoutLogs;
-using CoachApp.Entites.WorkoutPlans;
 using CoachApp.Permissions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -33,31 +27,13 @@ public class TraineeAppService : CoachAppAppService, ITraineeAppService
 {
     private readonly IRepository<Trainee, Guid> _traineeRepository;
     private readonly IdentityUserManager _userManager;
-    private readonly IRepository<WorkoutPlan, Guid> _workoutPlanRepository;
-    private readonly IRepository<NutritionPlan, Guid> _nutritionPlanRepository;
-    private readonly IRepository<WorkoutLog, Guid> _workoutLogRepository;
-    private readonly IRepository<NutritionLog, Guid> _nutritionLogRepository;
-    private readonly IRepository<ProgressEntry, Guid> _progressRepository;
-    private readonly IRepository<TraineeNote, Guid> _noteRepository;
 
     public TraineeAppService(
         IRepository<Trainee, Guid> traineeRepository,
-        IdentityUserManager userManager,
-        IRepository<WorkoutPlan, Guid> workoutPlanRepository,
-        IRepository<NutritionPlan, Guid> nutritionPlanRepository,
-        IRepository<WorkoutLog, Guid> workoutLogRepository,
-        IRepository<NutritionLog, Guid> nutritionLogRepository,
-        IRepository<ProgressEntry, Guid> progressRepository,
-        IRepository<TraineeNote, Guid> noteRepository)
+        IdentityUserManager userManager)
     {
         _traineeRepository = traineeRepository;
         _userManager = userManager;
-        _workoutPlanRepository = workoutPlanRepository;
-        _nutritionPlanRepository = nutritionPlanRepository;
-        _workoutLogRepository = workoutLogRepository;
-        _nutritionLogRepository = nutritionLogRepository;
-        _progressRepository = progressRepository;
-        _noteRepository = noteRepository;
     }
 
     public virtual async Task<TraineeDto> GetAsync(Guid id)
@@ -164,27 +140,19 @@ public class TraineeAppService : CoachAppAppService, ITraineeAppService
     [Authorize(CoachAppPermissions.Coach.Trainees.Delete)]
     public virtual async Task DeleteAsync(Guid id)
     {
+        // PD10 (F19, V1): "Delete" is a recoverable DEACTIVATION, not a purge — unified with an edit
+        // that sets IsActive = false. The trainee is NOT soft-deleted: it stays discoverable under the
+        // Inactive roster filter with ALL of its history (plans/logs/progress/notes) intact and viewable.
+        // Only IsActive is cleared and the login is locked. Reactivation is the ordinary Update with
+        // IsActive = true (which unlocks the login); a permanent purge is deferred to V1.1.
         var trainee = await _traineeRepository.GetAsync(id);
-
-        // Remove the trainee's dependent aggregates. Trainees and these aggregate roots are all
-        // FullAuditedAggregateRoot, so DeleteAsync performs a SOFT delete (sets IsDeleted) — the
-        // configured cascade FKs never physically delete anything. Child records (days/meals/items/
-        // entries) therefore remain physically stored under their soft-deleted parents and are
-        // hidden by ABP's soft-delete query filters (no orphans and no cross-tenant exposure). The
-        // linked IdentityUser below is hard-deleted.
-        await _workoutLogRepository.DeleteAsync(x => x.TraineeId == id);
-        await _nutritionLogRepository.DeleteAsync(x => x.TraineeId == id);
-        await _workoutPlanRepository.DeleteAsync(x => x.TraineeId == id);
-        await _nutritionPlanRepository.DeleteAsync(x => x.TraineeId == id);
-        await _progressRepository.DeleteAsync(x => x.TraineeId == id);
-        await _noteRepository.DeleteAsync(x => x.TraineeId == id);
-
-        await _traineeRepository.DeleteAsync(trainee, autoSave: true);
+        trainee.IsActive = false;
+        await _traineeRepository.UpdateAsync(trainee, autoSave: true);
 
         var user = await _userManager.FindByIdAsync(trainee.UserId.ToString());
         if (user != null)
         {
-            CheckIdentityErrors(await _userManager.DeleteAsync(user));
+            await ApplyLoginStateAsync(user, isActive: false);
         }
     }
 

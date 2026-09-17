@@ -247,4 +247,96 @@ public abstract class WorkoutPlanAppServiceTests<TStartupModule> : CoachAppApiTe
         var result = await _planAppService.GetListAsync(new GetWorkoutPlanListInput { TraineeId = trainee.Id });
         result.TotalCount.ShouldBe(0);
     }
+
+    [Fact]
+    public async Task Should_Reject_Duplicate_Scheduled_Weekday_On_Create()
+    {
+        // F2/PD9: at most one scheduled workout per weekday.
+        var trainee = await CreateTraineeAsync();
+
+        var ex = await Should.ThrowAsync<BusinessException>(() =>
+            _planAppService.CreateAsync(new CreateUpdateWorkoutPlanDto
+            {
+                TraineeId = trainee.Id,
+                Name = "Double Monday",
+                Days = new List<CreateUpdateWorkoutDayDto>
+                {
+                    new() { Name = "AM", Order = 1, ScheduledDay = DayOfWeek.Monday },
+                    new() { Name = "PM", Order = 2, ScheduledDay = DayOfWeek.Monday }
+                }
+            }));
+        ex.Code.ShouldBe(CoachAppDomainErrorCodes.DuplicateScheduledDay);
+    }
+
+    [Fact]
+    public async Task Should_Reject_Duplicate_Scheduled_Weekday_On_Update()
+    {
+        var trainee = await CreateTraineeAsync();
+        var created = await _planAppService.CreateAsync(new CreateUpdateWorkoutPlanDto
+        {
+            TraineeId = trainee.Id,
+            Name = "Split",
+            Days = new List<CreateUpdateWorkoutDayDto> { new() { Name = "Day 1", Order = 1, ScheduledDay = DayOfWeek.Monday } }
+        });
+
+        var ex = await Should.ThrowAsync<BusinessException>(() =>
+            _planAppService.UpdateAsync(created.Id, new CreateUpdateWorkoutPlanDto
+            {
+                TraineeId = trainee.Id,
+                Name = "Split",
+                Days = new List<CreateUpdateWorkoutDayDto>
+                {
+                    new() { Name = "Day 1", Order = 1, ScheduledDay = DayOfWeek.Tuesday },
+                    new() { Name = "Day 2", Order = 2, ScheduledDay = DayOfWeek.Tuesday }
+                }
+            }));
+        ex.Code.ShouldBe(CoachAppDomainErrorCodes.DuplicateScheduledDay);
+    }
+
+    [Fact]
+    public async Task Should_Allow_Multiple_Unscheduled_Days()
+    {
+        // Only non-null weekdays must be unique; unscheduled (null) days are unlimited.
+        var trainee = await CreateTraineeAsync();
+
+        var created = await _planAppService.CreateAsync(new CreateUpdateWorkoutPlanDto
+        {
+            TraineeId = trainee.Id,
+            Name = "Flexible",
+            Days = new List<CreateUpdateWorkoutDayDto>
+            {
+                new() { Name = "A", Order = 1, ScheduledDay = null },
+                new() { Name = "B", Order = 2, ScheduledDay = null },
+                new() { Name = "C", Order = 3, ScheduledDay = DayOfWeek.Friday }
+            }
+        });
+
+        created.Days.Count.ShouldBe(3);
+    }
+
+    [Fact]
+    public async Task Update_Should_Not_Reassign_Plan_To_A_Different_Trainee()
+    {
+        // F18/PD1: a plan is permanently bound to its trainee; a changed TraineeId on update is ignored.
+        var trainee1 = await CreateTraineeAsync();
+        var trainee2 = await CreateTraineeAsync();
+
+        var created = await _planAppService.CreateAsync(new CreateUpdateWorkoutPlanDto
+        {
+            TraineeId = trainee1.Id,
+            Name = "Owned by T1"
+        });
+
+        var updated = await _planAppService.UpdateAsync(created.Id, new CreateUpdateWorkoutPlanDto
+        {
+            TraineeId = trainee2.Id, // attempt to hijack
+            Name = "Renamed"
+        });
+
+        updated.TraineeId.ShouldBe(trainee1.Id);
+        (await _planAppService.GetAsync(created.Id)).TraineeId.ShouldBe(trainee1.Id);
+
+        // And it never appears on trainee2's list.
+        (await _planAppService.GetListAsync(new GetWorkoutPlanListInput { TraineeId = trainee2.Id })).TotalCount.ShouldBe(0);
+    }
 }

@@ -74,6 +74,36 @@ public abstract class NutritionPlanAppServiceTests<TStartupModule> : CoachAppApi
     }
 
     [Fact]
+    public async Task Should_Enrich_ServingSize_And_Unit_On_Items()
+    {
+        // F1: the meal item must carry the food's serving SIZE (not just the unit) so the
+        // client can render "N servings (N x size unit)" instead of mislabeling servings as grams.
+        var trainee = await CreateTraineeAsync();
+        var oats = await CreateFoodAsync("Oats", calories: 150m, servingSize: 40m, servingUnit: "g");
+
+        var result = await _planAppService.CreateAsync(new CreateUpdateNutritionPlanDto
+        {
+            TraineeId = trainee.Id,
+            Name = "Breakfast Plan",
+            Meals = new List<CreateUpdateMealDto>
+            {
+                new()
+                {
+                    Name = "Breakfast",
+                    Order = 1,
+                    Items = new List<CreateUpdateMealItemDto> { new() { FoodId = oats.Id, Order = 1, Quantity = 2m } }
+                }
+            }
+        });
+
+        var item = result.Meals.Single().Items.Single();
+        item.ServingSize.ShouldBe(40m);   // the food's per-serving size, independent of quantity
+        item.ServingUnit.ShouldBe("g");
+        item.Quantity.ShouldBe(2m);       // 2 servings -> real amount is 80 g
+        item.Calories.ShouldBe(300m);     // 150 * 2 servings
+    }
+
+    [Fact]
     public async Task Should_Throw_When_Trainee_Does_Not_Exist()
     {
         var ex = await Should.ThrowAsync<BusinessException>(() =>

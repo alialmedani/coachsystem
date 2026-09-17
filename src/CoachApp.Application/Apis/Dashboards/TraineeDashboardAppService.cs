@@ -70,6 +70,10 @@ public class TraineeDashboardAppService : CoachAppAppService, ITraineeDashboardA
             TraineeId = input.TraineeId,
             NutritionAdherence = await GetNutritionAdherenceAsync(
                 new GetNutritionAdherenceInput { TraineeId = input.TraineeId, Date = input.Date }),
+            NutritionAdherenceRange = await DashboardCalculator.ComputeNutritionAdherenceRangeAsync(
+                input.TraineeId, input.FromDate, input.ToDate,
+                _nutritionLogRepository, _nutritionPlanRepository, _foodRepository,
+                ObjectMapper, AsyncExecuter),
             WorkoutCompletion = await GetWorkoutCompletionAsync(
                 new GetWorkoutCompletionInput { TraineeId = input.TraineeId, FromDate = input.FromDate, ToDate = input.ToDate })
         };

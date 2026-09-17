@@ -36,6 +36,7 @@ internal static class NutritionPlanEnricher
 
                 item.FoodName = food.Name;
                 item.ServingUnit = food.ServingUnit;
+                item.ServingSize = food.ServingSize;
                 item.Calories = food.Calories * item.Quantity;
                 item.ProteinG = food.ProteinG * item.Quantity;
                 item.CarbsG = food.CarbsG * item.Quantity;

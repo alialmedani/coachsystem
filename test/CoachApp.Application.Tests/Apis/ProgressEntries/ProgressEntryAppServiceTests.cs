@@ -103,4 +103,30 @@ public abstract class ProgressEntryAppServiceTests<TStartupModule> : CoachAppApi
 
         await Should.ThrowAsync<EntityNotFoundException>(() => _progressAppService.GetAsync(created.Id));
     }
+
+    [Fact]
+    public async Task Update_Should_Not_Reassign_Entry_To_A_Different_Trainee()
+    {
+        // F18/PD1: an entry stays on its trainee's timeline; a changed TraineeId on update is ignored.
+        var trainee1 = await CreateTraineeAsync();
+        var trainee2 = await CreateTraineeAsync();
+
+        var created = await _progressAppService.CreateAsync(new CreateUpdateProgressEntryDto
+        {
+            TraineeId = trainee1.Id,
+            Date = new DateTime(2026, 4, 1),
+            WeightKg = 80m
+        });
+
+        var updated = await _progressAppService.UpdateAsync(created.Id, new CreateUpdateProgressEntryDto
+        {
+            TraineeId = trainee2.Id, // attempt to move it
+            Date = created.Date,
+            WeightKg = 79m
+        });
+
+        updated.TraineeId.ShouldBe(trainee1.Id);
+        (await _progressAppService.GetListAsync(new GetProgressEntryListInput { TraineeId = trainee2.Id })).TotalCount.ShouldBe(0);
+        (await _progressAppService.GetListAsync(new GetProgressEntryListInput { TraineeId = trainee1.Id })).TotalCount.ShouldBe(1);
+    }
 }

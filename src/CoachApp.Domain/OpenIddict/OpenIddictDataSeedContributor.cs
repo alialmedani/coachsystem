@@ -52,7 +52,8 @@ public class OpenIddictDataSeedContributor : OpenIddictDataSeedContributorBase, 
             OpenIddictConstants.Permissions.Scopes.Phone,
             OpenIddictConstants.Permissions.Scopes.Profile,
             OpenIddictConstants.Permissions.Scopes.Roles,
-            "CoachApp"
+            "CoachApp",
+            OpenIddictConstants.Scopes.OfflineAccess
         };
 
         var configurationSection = Configuration.GetSection("OpenIddict:Applications");

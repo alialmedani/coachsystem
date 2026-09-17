@@ -81,12 +81,8 @@ public class NutritionPlanAppService : CoachAppAppService, INutritionPlanAppServ
     {
         var plan = await _planRepository.GetAsync(id, includeDetails: true);
 
-        if (plan.TraineeId != input.TraineeId)
-        {
-            await CheckTraineeExistsAsync(input.TraineeId);
-            plan.TraineeId = input.TraineeId;
-        }
-
+        // F18/PD1: a plan is permanently bound to its trainee. The client's TraineeId is ignored
+        // on update, so a coach can never reassign an existing plan to a different trainee.
         await CheckFoodsExistAsync(input);
 
         plan.Name = input.Name;

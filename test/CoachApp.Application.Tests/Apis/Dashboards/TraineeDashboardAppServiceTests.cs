@@ -218,17 +218,17 @@ public abstract class TraineeDashboardAppServiceTests<TStartupModule> : CoachApp
     {
         var trainee = await CreateTraineeAsync();
 
-        // Two days both scheduled on Monday => one planned weekday.
-        await _workoutPlanAppService.CreateAsync(new CreateUpdateWorkoutPlanDto
+        // F2/PD9 forbids creating duplicate scheduled weekdays through the app service, so seed a
+        // legacy-shaped plan directly via the repository to verify the completion calculator still
+        // defensively counts a weekday once.
+        await WithUnitOfWorkAsync(async () =>
         {
-            TraineeId = trainee.Id,
-            Name = "Active",
-            IsActive = true,
-            Days = new List<CreateUpdateWorkoutDayDto>
-            {
-                new() { Name = "Push", Order = 1, ScheduledDay = DayOfWeek.Monday },
-                new() { Name = "Pull", Order = 2, ScheduledDay = DayOfWeek.Monday }
-            }
+            var repo = GetRequiredService<IRepository<WorkoutPlan, Guid>>();
+            var plan = WorkoutPlan.Create(Guid.NewGuid(), trainee.Id, "Active");
+            plan.AddDay(Guid.NewGuid(), "Push", 1, DayOfWeek.Monday);
+            plan.AddDay(Guid.NewGuid(), "Pull", 2, DayOfWeek.Monday);
+            plan.Activate();
+            await repo.InsertAsync(plan, autoSave: true);
         });
 
         var from = new DateTime(2026, 3, 2);
@@ -280,6 +280,48 @@ public abstract class TraineeDashboardAppServiceTests<TStartupModule> : CoachApp
         result.PlannedSessions.ShouldBe(3);
         result.CompletedSessions.ShouldBe(3);
         result.CompletionPercent.ShouldBe(100m);
+    }
+
+    [Fact]
+    public async Task Summary_Should_Include_Weekly_Nutrition_Adherence_Range()
+    {
+        // F5/PD5: range adherence averages daily consumption over the days actually logged.
+        var trainee = await CreateTraineeAsync();
+        var food = await CreateFoodAsync("Oats"); // 100 kcal per serving
+        var from = new DateTime(2026, 3, 2);
+        var to = from.AddDays(6); // 7-day window
+
+        // Active plan target: quantity 2 => 200 kcal/day.
+        await _nutritionPlanAppService.CreateAsync(new CreateUpdateNutritionPlanDto
+        {
+            TraineeId = trainee.Id,
+            Name = "Active",
+            IsActive = true,
+            Meals = new List<CreateUpdateMealDto>
+            {
+                new() { Name = "Breakfast", Order = 1, Items = new List<CreateUpdateMealItemDto> { new() { FoodId = food.Id, Order = 1, Quantity = 2m } } }
+            }
+        });
+
+        // Logged on two distinct days: 100 kcal each => total 200, over 2 logged days.
+        await SeedNutritionLogAsync(trainee.Id, from, food.Id, quantity: 1m);
+        await SeedNutritionLogAsync(trainee.Id, from.AddDays(2), food.Id, quantity: 1m);
+
+        var summary = await _dashboard.GetSummaryAsync(new GetTraineeDashboardInput
+        {
+            TraineeId = trainee.Id,
+            Date = from,
+            FromDate = from,
+            ToDate = to
+        });
+
+        var range = summary.NutritionAdherenceRange.ShouldNotBeNull();
+        range.DaysInRange.ShouldBe(7);
+        range.DaysLogged.ShouldBe(2);
+        range.HasActivePlan.ShouldBeTrue();
+        range.ConsumedCaloriesTotal.ShouldBe(200m);
+        range.TargetCaloriesPerDay.ShouldBe(200m);
+        range.AverageCaloriesPercent.ShouldBe(50m); // 200 / (200 * 2 days) * 100
     }
 
     private Task SeedNutritionLogAsync(Guid traineeId, DateTime date, Guid foodId, decimal quantity)

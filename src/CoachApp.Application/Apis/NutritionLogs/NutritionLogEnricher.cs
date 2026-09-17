@@ -31,6 +31,7 @@ internal static class NutritionLogEnricher
 
             entry.FoodName = food.Name;
             entry.ServingUnit = food.ServingUnit;
+            entry.ServingSize = food.ServingSize;
             entry.Calories = food.Calories * entry.Quantity;
             entry.ProteinG = food.ProteinG * entry.Quantity;
             entry.CarbsG = food.CarbsG * entry.Quantity;

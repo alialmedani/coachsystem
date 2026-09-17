@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CoachApp.Apis;
 using CoachApp.Entites.Trainees;
+using CoachApp.Entites.WorkoutPlans;
 using CoachApp.Enums;
 using CoachApp.Permissions;
 using Shouldly;
@@ -104,18 +105,61 @@ public abstract class TraineeAppServiceTests<TStartupModule> : CoachAppApiTestBa
     }
 
     [Fact]
-    public async Task Should_Delete_Trainee_And_Its_Identity_User()
+    public async Task Delete_Should_Deactivate_Trainee_Keep_It_Discoverable_And_Lock_Login()
     {
+        // PD10/F19 (unified V1): "Delete" is a recoverable DEACTIVATION, NOT a soft-delete/purge. The
+        // trainee is NOT hidden — it stays discoverable under the Inactive roster filter with its history
+        // intact; only IsActive is cleared and the login is locked (same state as an edit with IsActive=false).
         var created = await CreateTraineeAsync();
+        var planService = GetRequiredService<IWorkoutPlanAppService>();
+        var plan = await planService.CreateAsync(new CreateUpdateWorkoutPlanDto { TraineeId = created.Id, Name = "History" });
 
         await _traineeAppService.DeleteAsync(created.Id);
 
-        await Should.ThrowAsync<EntityNotFoundException>(() => _traineeAppService.GetAsync(created.Id));
+        // Still fetchable, now inactive (NOT soft-deleted / hidden).
+        var after = await _traineeAppService.GetAsync(created.Id);
+        after.IsActive.ShouldBeFalse();
 
+        // Discoverable under the Inactive filter; absent from the Active filter.
+        (await _traineeAppService.GetListAsync(new GetTraineeListInput { IsActive = false }))
+            .Items.ShouldContain(t => t.Id == created.Id);
+        (await _traineeAppService.GetListAsync(new GetTraineeListInput { IsActive = true }))
+            .Items.ShouldNotContain(t => t.Id == created.Id);
+
+        // Login preserved but locked (cannot sign in).
+        var userManager = GetRequiredService<IdentityUserManager>();
         await WithUnitOfWorkAsync(async () =>
         {
             var user = await _userRepository.FindAsync(created.UserId);
-            user.ShouldBeNull();
+            user.ShouldNotBeNull();
+            (await userManager.IsLockedOutAsync(user!)).ShouldBeTrue();
+        });
+
+        // Historical data remains accessible while the trainee is inactive.
+        (await planService.GetAsync(plan.Id)).TraineeId.ShouldBe(created.Id);
+    }
+
+    [Fact]
+    public async Task Reactivation_Via_Update_Should_Restore_The_Login()
+    {
+        // Recovery uses the ordinary Update (IsActive = true) — no separate restore endpoint.
+        var created = await CreateTraineeAsync();
+        await _traineeAppService.DeleteAsync(created.Id); // deactivate
+
+        var reactivated = await _traineeAppService.UpdateAsync(created.Id, new UpdateTraineeDto
+        {
+            FirstName = created.FirstName,
+            LastName = created.LastName,
+            Goal = created.Goal,
+            IsActive = true
+        });
+        reactivated.IsActive.ShouldBeTrue();
+
+        var userManager = GetRequiredService<IdentityUserManager>();
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var user = await _userRepository.FindAsync(created.UserId);
+            (await userManager.IsLockedOutAsync(user!)).ShouldBeFalse(); // login unlocked again
         });
     }
 

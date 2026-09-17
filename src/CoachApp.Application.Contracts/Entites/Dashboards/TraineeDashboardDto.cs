@@ -12,5 +12,8 @@ public class TraineeDashboardDto
 
     public NutritionAdherenceDto? NutritionAdherence { get; set; }
 
+    /// <summary>F5/PD5: nutrition adherence aggregated over <c>FromDate..ToDate</c> (weekly view).</summary>
+    public NutritionAdherenceRangeDto? NutritionAdherenceRange { get; set; }
+
     public WorkoutCompletionDto? WorkoutCompletion { get; set; }
 }

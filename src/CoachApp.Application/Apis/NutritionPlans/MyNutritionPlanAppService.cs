@@ -25,10 +25,12 @@ public class MyNutritionPlanAppService : MyTraineeAppServiceBase, IMyNutritionPl
         _foodRepository = foodRepository;
     }
 
+    // PD8: a trainee sees ACTIVE plans only. Inactive/archived plans are hidden from both the
+    // list and the detail endpoint (inactive/draft browsing is deferred to V1.1).
     public virtual async Task<List<NutritionPlanDto>> GetListAsync()
     {
         var traineeId = await GetCurrentTraineeIdAsync();
-        var plans = await _planRepository.GetListAsync(x => x.TraineeId == traineeId);
+        var plans = await _planRepository.GetListAsync(x => x.TraineeId == traineeId && x.IsActive);
         return ObjectMapper.Map<List<NutritionPlan>, List<NutritionPlanDto>>(plans);
     }
 
@@ -36,7 +38,7 @@ public class MyNutritionPlanAppService : MyTraineeAppServiceBase, IMyNutritionPl
     {
         var traineeId = await GetCurrentTraineeIdAsync();
         var plan = await _planRepository.GetAsync(id, includeDetails: true);
-        if (plan.TraineeId != traineeId)
+        if (plan.TraineeId != traineeId || !plan.IsActive)
         {
             throw new EntityNotFoundException(typeof(NutritionPlan), id);
         }

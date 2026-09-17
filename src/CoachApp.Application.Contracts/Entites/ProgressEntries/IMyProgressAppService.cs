@@ -10,6 +10,8 @@ public interface IMyProgressAppService : IApplicationService
 {
     Task<ProgressEntryDto> CreateAsync(CreateMyProgressEntryDto input);
 
+    Task<ProgressEntryDto> UpdateAsync(Guid id, UpdateMyProgressEntryDto input);
+
     Task<PagedResultDto<ProgressEntryDto>> GetListAsync(GetMyProgressListInput input);
 
     Task<ProgressEntryDto> GetAsync(Guid id);
